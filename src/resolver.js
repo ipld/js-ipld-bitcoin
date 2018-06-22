@@ -133,6 +133,7 @@ const resolveField = (dagNode, field) => {
 
 module.exports = {
   multicodec: 'bitcoin-block',
+  defaultHashAlg: 'dbl-sha2-256',
   resolve: resolve,
   tree: tree
 }

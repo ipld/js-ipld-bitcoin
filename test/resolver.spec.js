@@ -139,6 +139,11 @@ describe('IPLD format resolver API properties', () => {
     expect(IpldBitcoin.resolver.multicodec).to.equal('bitcoin-block')
     done()
   })
+
+  it('should have `defaultHashAlg` defined correctly', (done) => {
+    expect(IpldBitcoin.resolver.defaultHashAlg).to.equal('dbl-sha2-256')
+    done()
+  })
 })
 
 const verifyPath = (block, path, expected, done) => {
