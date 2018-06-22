@@ -87,7 +87,9 @@ const cid = (dagNode, callback) => {
 
 // Convert a Bitcoin hash (as Buffer) to a CID
 const hashToCid = (hash) => {
-  const multihash = multihashes.encode(hash, 'dbl-sha2-256')
+  // avoid deadly embrace between resolver and util
+  const defaultHashAlg = require('./resolver').defaultHashAlg
+  const multihash = multihashes.encode(hash, defaultHashAlg)
   const cidVersion = 1
   const cid = new CID(cidVersion, 'bitcoin-block', multihash)
   return cid
