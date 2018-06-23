@@ -66,10 +66,16 @@ const deserialize = (binaryBlob, callback) => {
  * Get the CID of the DAG-Node.
  *
  * @param {BitcoinBlock} dagNode - Internal representation of a Bitcoin block
+ * @param {Object} [options] - Ignored
  * @param {CidCallback} callback - Callback that handles the return value
  * @returns {void}
  */
-const cid = (dagNode, callback) => {
+const cid = (dagNode, options, callback) => {
+  if (options instanceof Function) {
+    callback = options
+    options = {}
+  }
+  options = options || {}
   let err = null
   let cid
   try {

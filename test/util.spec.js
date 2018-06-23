@@ -150,6 +150,17 @@ describe('IPLD format util API cid()', () => {
       done()
     })
   })
+
+  it('should encode the CID correctly and ignore all options', (done) => {
+    IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
+      expect(err).to.not.exist()
+      verifyCid1(
+        dagNode,
+        { hashAlg: 'unknown' },
+        '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
+        done)
+    })
+  })
 })
 
 const verifyBlock = (dagNode, expected) => {
@@ -163,6 +174,14 @@ const verifyBlock = (dagNode, expected) => {
 
 const verifyCid = (dagNode, expectedCid, doneCb) => {
   IpldBitcoin.util.cid(dagNode, (err, cid) => {
+    expect(err).to.not.exist()
+    expect(cid.multihash.toString('hex')).to.equal(expectedCid)
+    doneCb()
+  })
+}
+
+const verifyCid1 = (dagNode, options, expectedCid, doneCb) => {
+  IpldBitcoin.util.cid(dagNode, options, (err, cid) => {
     expect(err).to.not.exist()
     expect(cid.multihash.toString('hex')).to.equal(expectedCid)
     doneCb()
