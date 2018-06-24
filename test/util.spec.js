@@ -161,6 +161,17 @@ describe('IPLD format util API cid()', () => {
         done)
     })
   })
+
+  it('should encode the CID correctly and ignore undefined options', (done) => {
+    IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
+      expect(err).to.not.exist()
+      verifyCid1(
+        dagNode,
+        undefined,
+        '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
+        done)
+    })
+  })
 })
 
 const verifyBlock = (dagNode, expected) => {
