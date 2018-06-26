@@ -3,7 +3,8 @@
 const BitcoinjsBlock = require('bitcoinjs-lib').Block
 const CID = require('cids')
 const multihashes = require('multihashes')
-const sha256 = require('hash.js/lib/hash/sha/256')
+const multihashing = require('multihashing-async')
+const waterfall = require('async/waterfall')
 
 /**
  * @callback SerializeCallback
@@ -76,19 +77,16 @@ const cid = (dagNode, options, callback) => {
     options = {}
   }
   options = options || {}
-  let err = null
-  let cid
-  try {
-    // Bitcoin double hashes
-    const firstHash = sha256().update(dagNode.toBuffer(true)).digest()
-    const headerHash = sha256().update(Buffer.from(firstHash)).digest()
-
-    cid = hashToCid(Buffer.from(headerHash))
-  } catch (cidError) {
-    err = cidError
-  } finally {
-    callback(err, cid)
-  }
+  waterfall([
+    (cb) => {
+      try {
+        multihashing(dagNode.toBuffer(true), 'dbl-sha2-256', cb)
+      } catch (err) {
+        cb(err)
+      }
+    },
+    (mh, cb) => cb(null, new CID(1, 'bitcoin-block', mh))
+  ], callback)
 }
 
 // Convert a Bitcoin hash (as Buffer) to a CID
