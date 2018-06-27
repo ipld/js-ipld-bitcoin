@@ -151,23 +151,34 @@ describe('IPLD format util API cid()', () => {
     })
   })
 
-  it('should encode the CID correctly and ignore all options', (done) => {
+  it('should encode the CID correctly with option', (done) => {
     IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
       expect(err).to.not.exist()
       verifyCid1(
         dagNode,
-        { hashAlg: 'unknown' },
-        '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
+        { hashAlg: 'sha3-256' },
+        '16208fd2802e0304c79c08a1ff2afb706ce64b78f3b94fd1c9142946c2e715589cfb',
         done)
     })
   })
 
-  it('should encode the CID correctly and ignore undefined options', (done) => {
+  it('should encode the CID correctly with undefined options', (done) => {
     IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
       expect(err).to.not.exist()
       verifyCid1(
         dagNode,
         undefined,
+        '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
+        done)
+    })
+  })
+  
+  it('should encode the CID correctly with default options specified', (done) => {
+    IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
+      expect(err).to.not.exist()
+      verifyCid1(
+        dagNode,
+        { version: 1, hashAlg: 'dbl-sha2-256' },
         '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
         done)
     })
