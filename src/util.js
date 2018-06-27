@@ -69,7 +69,7 @@ const deserialize = (binaryBlob, callback) => {
  * @param {BitcoinBlock} dagNode - Internal representation of a Bitcoin block
  * @param {Object} [options] - Options to create the CID
  * @param {number} [options.version=1] - CID version number
- * @param {string} [options.hashAlg=dbl-sha2-256] - Hashing algorithm
+ * @param {string} [options.hashAlg='dbl-sha2-256'] - Hashing algorithm
  * @param {CidCallback} callback - Callback that handles the return value
  * @returns {void}
  */

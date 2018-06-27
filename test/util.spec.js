@@ -151,7 +151,7 @@ describe('IPLD format util API cid()', () => {
     })
   })
 
-  it('should encode the CID correctly with option', (done) => {
+  it('should encode the CID correctly with options', (done) => {
     IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
       expect(err).to.not.exist()
       verifyCid1(
@@ -172,7 +172,7 @@ describe('IPLD format util API cid()', () => {
         done)
     })
   })
-  
+
   it('should encode the CID correctly with default options specified', (done) => {
     IpldBitcoin.util.deserialize(fixtureBlock, (err, dagNode) => {
       expect(err).to.not.exist()
