@@ -67,7 +67,9 @@ const deserialize = (binaryBlob, callback) => {
  * Get the CID of the DAG-Node.
  *
  * @param {BitcoinBlock} dagNode - Internal representation of a Bitcoin block
- * @param {Object} [options] - Ignored
+ * @param {Object} [options] - Options to create the CID
+ * @param {number} [options.version=1] - CID version number
+ * @param {string} [options.hashAlg='dbl-sha2-256'] - Hashing algorithm
  * @param {CidCallback} callback - Callback that handles the return value
  * @returns {void}
  */
@@ -77,15 +79,18 @@ const cid = (dagNode, options, callback) => {
     options = {}
   }
   options = options || {}
+  // avoid deadly embrace between resolver and util
+  const hashAlg = options.hashAlg || require('./resolver').defaultHashAlg
+  const version = typeof options.version === 'undefined' ? 1 : options.version
   waterfall([
     (cb) => {
       try {
-        multihashing(dagNode.toBuffer(true), 'dbl-sha2-256', cb)
+        multihashing(dagNode.toBuffer(true), hashAlg, cb)
       } catch (err) {
         cb(err)
       }
     },
-    (mh, cb) => cb(null, new CID(1, 'bitcoin-block', mh))
+    (mh, cb) => cb(null, new CID(version, 'bitcoin-block', mh))
   ], callback)
 }
 
