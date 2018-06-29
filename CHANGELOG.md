@@ -1,3 +1,21 @@
+<a name="0.1.6"></a>
+## [0.1.6](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.5...v0.1.6) (2018-06-29)
+
+
+### Bug Fixes
+
+* do not ignore cid.options ([#20](https://github.com/ipld/js-ipld-bitcoin/issues/20)) ([177ddc5](https://github.com/ipld/js-ipld-bitcoin/commit/177ddc5))
+* move dirty-chai to dev dependencies ([3805fc1](https://github.com/ipld/js-ipld-bitcoin/commit/3805fc1))
+* use multihasing-async [#14](https://github.com/ipld/js-ipld-bitcoin/issues/14) ([#19](https://github.com/ipld/js-ipld-bitcoin/issues/19)) ([77354ac](https://github.com/ipld/js-ipld-bitcoin/commit/77354ac))
+
+
+### Features
+
+* add defaultHashAlg ([#17](https://github.com/ipld/js-ipld-bitcoin/issues/17)) ([6e28d3e](https://github.com/ipld/js-ipld-bitcoin/commit/6e28d3e))
+* add util.cid options ([#18](https://github.com/ipld/js-ipld-bitcoin/issues/18)) ([eab262f](https://github.com/ipld/js-ipld-bitcoin/commit/eab262f))
+
+
+
 <a name="0.1.5"></a>
 ## [0.1.5](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.4...v0.1.5) (2018-02-14)
 
