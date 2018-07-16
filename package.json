@@ -41,7 +41,7 @@
     "multihashing-async": "~0.5.1"
   },
   "devDependencies": {
-    "aegir": "^14.0.0",
+    "aegir": "^15.0.0",
     "chai": "^4.1.2",
     "dirty-chai": "^2.0.1"
   },
