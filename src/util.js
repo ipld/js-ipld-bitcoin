@@ -6,6 +6,8 @@ const multihashes = require('multihashes')
 const multihashing = require('multihashing-async')
 const waterfall = require('async/waterfall')
 
+const BITCOIN_BLOCK_HEADER_SIZE = 80
+
 /**
  * @callback SerializeCallback
  * @param {?Error} error - Error if serialization failed
@@ -24,7 +26,7 @@ const serialize = (dagNode, callback) => {
   let err = null
   let binaryBlob
   try {
-    binaryBlob = dagNode.toBuffer()
+    binaryBlob = dagNode.toBuffer(true)
   } catch (serializeError) {
     err = serializeError
   } finally {
@@ -47,15 +49,14 @@ const serialize = (dagNode, callback) => {
  * @returns {void}
  */
 const deserialize = (binaryBlob, callback) => {
-  let err = null
-  let dagNode
-  try {
-    dagNode = BitcoinjsBlock.fromBuffer(binaryBlob)
-  } catch (deserializeError) {
-    err = deserializeError
-  } finally {
-    callback(err, dagNode)
+  if (binaryBlob.length !== BITCOIN_BLOCK_HEADER_SIZE) {
+    const err = new Error(
+      `Bitcoin block header needs to be ${BITCOIN_BLOCK_HEADER_SIZE} bytes`)
+    return callback(err)
   }
+
+  const dagNode = BitcoinjsBlock.fromBuffer(binaryBlob)
+  callback(null, dagNode)
 }
 
 /**
@@ -106,6 +107,7 @@ const hashToCid = (hash) => {
 
 module.exports = {
   hashToCid: hashToCid,
+  BITCOIN_BLOCK_HEADER_SIZE: BITCOIN_BLOCK_HEADER_SIZE,
 
   // Public API
   cid: cid,

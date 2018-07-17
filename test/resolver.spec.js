@@ -8,14 +8,15 @@ const expect = chai.expect
 chai.use(dirtyChai)
 const CID = require('cids')
 const IpldBitcoin = require('../src/index')
+const helpers = require('./helpers')
 
 const fixtureBlockHex = loadFixture('test/fixtures/block.hex')
-const fixtureBlock = Buffer.from(fixtureBlockHex.toString(), 'hex')
+const fixtureBlockHeader = helpers.headerFromHexBlock(fixtureBlockHex)
 const invalidBlock = Buffer.from('abcdef', 'hex')
 
-describe('IPLD format resolver API resolve()', () => {
+describe('IPLD format resolve API resolve()', () => {
   it('should return the deserialized node if no path is given', (done) => {
-    IpldBitcoin.resolver.resolve(fixtureBlock, (err, value) => {
+    IpldBitcoin.resolver.resolve(fixtureBlockHeader, (err, value) => {
       expect(err).to.not.exist()
       expect(value.remainderPath).is.empty()
       expect(value.value).is.not.empty()
@@ -24,7 +25,7 @@ describe('IPLD format resolver API resolve()', () => {
   })
 
   it('should return the deserialized node if path is empty', (done) => {
-    IpldBitcoin.resolver.resolve(fixtureBlock, '', (err, value) => {
+    IpldBitcoin.resolver.resolve(fixtureBlockHeader, '', (err, value) => {
       expect(err).to.not.exist()
       expect(value.remainderPath).is.empty()
       expect(value.value).is.not.empty()
@@ -33,35 +34,35 @@ describe('IPLD format resolver API resolve()', () => {
   })
 
   it('should return the version', (done) => {
-    verifyPath(fixtureBlock, 'version', 2, done)
+    verifyPath(fixtureBlockHeader, 'version', 2, done)
   })
 
   it('should return the timestamp', (done) => {
-    verifyPath(fixtureBlock, 'timestamp', 1386981279, done)
+    verifyPath(fixtureBlockHeader, 'timestamp', 1386981279, done)
   })
 
   it('should return the difficulty', (done) => {
-    verifyPath(fixtureBlock, 'difficulty', 419740270, done)
+    verifyPath(fixtureBlockHeader, 'difficulty', 419740270, done)
   })
 
   it('should return the nonce', (done) => {
-    verifyPath(fixtureBlock, 'nonce', 3159344128, done)
+    verifyPath(fixtureBlockHeader, 'nonce', 3159344128, done)
   })
 
   it('should error on non-existent path', (done) => {
-    verifyError(fixtureBlock, 'something/random', done)
+    verifyError(fixtureBlockHeader, 'something/random', done)
   })
 
   it('should error on path starting with a slash', (done) => {
-    verifyError(fixtureBlock, '/version', done)
+    verifyError(fixtureBlockHeader, '/version', done)
   })
 
   it('should error on partially matching path that isn\'t a link', (done) => {
-    verifyError(fixtureBlock, 'version/but/additional/things', done)
+    verifyError(fixtureBlockHeader, 'version/but/additional/things', done)
   })
 
   it('should return a link when parent is requested', (done) => {
-    IpldBitcoin.resolver.resolve(fixtureBlock, 'parent', (err, value) => {
+    IpldBitcoin.resolver.resolve(fixtureBlockHeader, 'parent', (err, value) => {
       expect(err).to.not.exist()
       expect(value.remainderPath).is.empty()
       expect(value.value).to.deep.equal({
@@ -72,7 +73,7 @@ describe('IPLD format resolver API resolve()', () => {
 
   it('should return a link and remaining path when parent is requested',
     (done) => {
-      IpldBitcoin.resolver.resolve(fixtureBlock, 'parent/timestamp',
+      IpldBitcoin.resolver.resolve(fixtureBlockHeader, 'parent/timestamp',
         (err, value) => {
           expect(err).to.not.exist()
           expect(value.remainderPath).to.equal('timestamp')
@@ -84,7 +85,7 @@ describe('IPLD format resolver API resolve()', () => {
     })
 
   it('should return a link when transactions are requested', (done) => {
-    IpldBitcoin.resolver.resolve(fixtureBlock, 'tx/some/remainder',
+    IpldBitcoin.resolver.resolve(fixtureBlockHeader, 'tx/some/remainder',
       (err, value) => {
         expect(err).to.not.exist()
         expect(value.remainderPath).to.equal('some/remainder')
@@ -101,7 +102,7 @@ describe('IPLD format resolver API resolve()', () => {
 
 describe('IPLD format resolver API tree()', () => {
   it('should return only paths by default', (done) => {
-    IpldBitcoin.resolver.tree(fixtureBlock, (err, value) => {
+    IpldBitcoin.resolver.tree(fixtureBlockHeader, (err, value) => {
       expect(err).to.not.exist()
       expect(value).to.deep.equal(['version', 'timestamp', 'difficulty',
         'nonce', 'parent', 'tx'])
@@ -110,7 +111,7 @@ describe('IPLD format resolver API tree()', () => {
   })
 
   it('should be able to return paths and values', (done) => {
-    IpldBitcoin.resolver.tree(fixtureBlock, {values: true}, (err, value) => {
+    IpldBitcoin.resolver.tree(fixtureBlockHeader, {values: true}, (err, value) => {
       expect(err).to.not.exist()
       expect(value).to.deep.equal({
         version: 2,
