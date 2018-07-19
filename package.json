@@ -35,6 +35,7 @@
   "dependencies": {
     "bitcoinjs-lib": "^3.3.2",
     "cids": "~0.5.2",
+    "git-validate": "^2.2.2",
     "multihashes": "~0.4.12",
     "multihashing-async": "~0.5.1"
   },
