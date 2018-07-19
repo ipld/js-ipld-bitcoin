@@ -1,3 +1,13 @@
+<a name="0.1.7"></a>
+## [0.1.7](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.6...v0.1.7) (2018-07-19)
+
+
+### Bug Fixes
+
+* use block headers only ([ef05359](https://github.com/ipld/js-ipld-bitcoin/commit/ef05359))
+
+
+
 <a name="0.1.6"></a>
 ## [0.1.6](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.5...v0.1.6) (2018-06-29)
 
