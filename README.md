@@ -4,8 +4,6 @@
 [![](https://img.shields.io/badge/project-IPLD-blue.svg?style=flat-square)](http://github.com/ipld/ipld)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
 [![Coverage](https://coveralls.io/repos/github/ipld/js-ipld-bitcoin/badge.svg?branch=master)](https://coveralls.io/github/ipld/js-ipld-bitcoin?branch=master)
-[![Travis](https://travis-ci.org/ipld/js-ipld-bitcoin.svg?branch=master)](https://travis-ci.org/ipld/js-ipld-bitcoin)
-[![Circle](https://circleci.com/gh/ipld/js-ipld-bitcoin.svg?style=svg)](https://circleci.com/gh/ipld/js-ipld-bitcoin)
 [![](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 [![](https://david-dm.org/ipld/js-ipld-bitcoin.svg?style=flat-square)](https://david-dm.org/ipld/js-ipld-bitcoin)
 [![](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/feross/standard) [![Greenkeeper badge](https://badges.greenkeeper.io/ipld/js-ipld-bitcoin.svg)](https://greenkeeper.io/)
