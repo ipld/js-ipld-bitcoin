@@ -46,9 +46,11 @@
     "dirty-chai": "^2.0.1"
   },
   "contributors": [
+    "Alex Potsides <alex@achingbrain.net>",
     "David Dias <daviddias.p@gmail.com>",
     "Mathis Wiehl <mathis.wiehl@sinnerschrader.com>",
     "Richard Schneider <makaretu@gmail.com>",
-    "Volker Mische <volker.mische@gmail.com>"
+    "Volker Mische <volker.mische@gmail.com>",
+    "greenkeeper[bot] <greenkeeper[bot]@users.noreply.github.com>"
   ]
 }
