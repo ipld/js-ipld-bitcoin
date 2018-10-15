@@ -1,3 +1,13 @@
+<a name="0.1.8"></a>
+## [0.1.8](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.7...v0.1.8) (2018-10-15)
+
+
+### Bug Fixes
+
+* add missing async dependency ([c070fdf](https://github.com/ipld/js-ipld-bitcoin/commit/c070fdf))
+
+
+
 <a name="0.1.7"></a>
 ## [0.1.7](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.6...v0.1.7) (2018-07-19)
 

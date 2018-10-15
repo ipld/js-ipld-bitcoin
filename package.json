@@ -1,6 +1,6 @@
 {
   "name": "ipld-bitcoin",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "JavaScript implementation of Bitcoin IPLD formats",
   "leadMaintainer": "Volker Mische <volker.mische@gmail.com>",
   "main": "src/index.js",
