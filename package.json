@@ -33,16 +33,15 @@
   },
   "homepage": "https://github.com/ipld/js-ipld-bitcoin#readme",
   "dependencies": {
-    "async": "^2.6.1",
     "bitcoinjs-lib": "^4.0.2",
-    "cids": "~0.5.2",
-    "git-validate": "^2.2.2",
-    "multihashes": "~0.4.12",
+    "cids": "~0.5.5",
+    "git-validate": "^2.2.4",
+    "multihashes": "~0.4.14",
     "multihashing-async": "~0.5.1"
   },
   "devDependencies": {
     "aegir": "^17.0.1",
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
     "dirty-chai": "^2.0.1"
   },
   "contributors": [

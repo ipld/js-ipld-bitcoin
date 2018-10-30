@@ -3,11 +3,9 @@
 const util = require('./util')
 
 /**
- * @callback ResolveCallback
- * @param {?Error} error - Error if path can't be resolved
- * @param {Object} result - Result of the path it it was resolved successfully
- * @param {*} result.value - Value the path resolves to
- * @param {string} result.remainderPath - If the path resolves half-way to a
+ * @typedef ResolveObject
+ * @property {*} value - Value the path resolves to
+ * @property {string} remainderPath - If the path resolves half-way to a
  *   link, then the `remainderPath` is the part after the link that can be used
  *   for further resolving.
  */
@@ -19,61 +17,44 @@ const util = require('./util')
  *
  * @param {Buffer} binaryBlob - Binary representation of a Bitcoin block
  * @param {string} [path='/'] - Path that should be resolved
- * @param {ResolveCallback} callback - Callback that handles the return value
- * @returns {void}
+ * @returns {Promise<ResolveObject>}
  */
-const resolve = (binaryBlob, path, callback) => {
-  if (typeof path === 'function') {
-    callback = path
-    path = undefined
+const resolve = async (binaryBlob, path) => {
+  const dagNode = await util.deserialize(binaryBlob)
+
+  // Return the deserialized block if no path is given
+  if (!path) {
+    return {
+      value: dagNode,
+      remainderPath: ''
+    }
   }
 
-  util.deserialize(binaryBlob, (err, dagNode) => {
-    if (err) {
-      return callback(err)
+  const pathArray = path.split('/')
+  const value = resolveField(dagNode, pathArray[0])
+  if (value === null) {
+    throw new Error('No such path')
+  }
+
+  let remainderPath = pathArray.slice(1).join('/')
+  // It is a link, hence it may have a remainder
+  if (value['/'] !== undefined) {
+    return {
+      value: value,
+      remainderPath: remainderPath
+    }
+  } else {
+    if (remainderPath.length > 0) {
+      throw new Error('No such path')
     }
 
-    // Return the deserialized block if no path is given
-    if (!path) {
-      return callback(null, {
-        value: dagNode,
-        remainderPath: ''
-      })
+    return {
+      value: value,
+      remainderPath: ''
     }
-
-    const pathArray = path.split('/')
-    const value = resolveField(dagNode, pathArray[0])
-    if (value === null) {
-      return callback(new Error('No such path'), null)
-    }
-
-    let remainderPath = pathArray.slice(1).join('/')
-    // It is a link, hence it may have a remainder
-    if (value['/'] !== undefined) {
-      return callback(null, {
-        value: value,
-        remainderPath: remainderPath
-      })
-    } else {
-      if (remainderPath.length > 0) {
-        return callback(new Error('No such path'), null)
-      } else {
-        return callback(null, {
-          value: value,
-          remainderPath: ''
-        })
-      }
-    }
-  })
+  }
 }
 
-/**
- * @callback TreeCallback
- * @param {?Error} error - Error if paths can't be retreived
- * @param {string[] | Object.<string, *>[]} result - The result depends on
- *   `options.values`, whether it returns only the paths, or the paths with
- *   the corresponding values
- */
 /**
  * Return all available paths of a block.
  *
@@ -81,34 +62,24 @@ const resolve = (binaryBlob, path, callback) => {
  * @param {Object} [options] - Possible options
  * @param {boolean} [options.values=false] - Retun only the paths by default.
  *   If it is `true` also return the values
- * @param {TreeCallback} callback - Callback that handles the return value
- * @returns {void}
+ * @returns {Promise<string[] | Object.<string, *>[]>} - The result depends on
+ *   `options.values`, whether it returns only the paths, or the paths with
+ *   the corresponding values
  */
-const tree = (binaryBlob, options, callback) => {
-  if (typeof options === 'function') {
-    callback = options
-    options = undefined
+const tree = async (binaryBlob, options = {}) => {
+  const dagNode = await util.deserialize(binaryBlob)
+  const paths = ['version', 'timestamp', 'difficulty', 'nonce',
+    'parent', 'tx']
+
+  if (options.values === true) {
+    const pathValues = {}
+    for (let path of paths) {
+      pathValues[path] = resolveField(dagNode, path)
+    }
+    return pathValues
+  } else {
+    return paths
   }
-  options = options || {}
-
-  util.deserialize(binaryBlob, (err, dagNode) => {
-    if (err) {
-      return callback(err)
-    }
-
-    const paths = ['version', 'timestamp', 'difficulty', 'nonce',
-      'parent', 'tx']
-
-    if (options.values === true) {
-      const pathValues = {}
-      for (let path of paths) {
-        pathValues[path] = resolveField(dagNode, path)
-      }
-      return callback(null, pathValues)
-    } else {
-      return callback(null, paths)
-    }
-  })
 }
 
 // Return top-level fields. Returns `null` if field doesn't exist

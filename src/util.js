@@ -4,66 +4,35 @@ const BitcoinjsBlock = require('bitcoinjs-lib').Block
 const CID = require('cids')
 const multihashes = require('multihashes')
 const multihashing = require('multihashing-async')
-const waterfall = require('async/waterfall')
 
 const BITCOIN_BLOCK_HEADER_SIZE = 80
 
 /**
- * @callback SerializeCallback
- * @param {?Error} error - Error if serialization failed
- * @param {?Buffer} binaryBlob - Binary Bitcoin block if serialization was
- *   successful
- */
-/**
  * Serialize internal representation into a binary Bitcoin block.
  *
  * @param {BitcoinBlock} dagNode - Internal representation of a Bitcoin block
- * @param {SerializeCallback} callback - Callback that handles the
- *   return value
- * @returns {void}
+ * @returns {Promise<Buffer>} - Binary Bitcoin block if serialization was
+ *   successful
  */
-const serialize = (dagNode, callback) => {
-  let err = null
-  let binaryBlob
-  try {
-    binaryBlob = dagNode.toBuffer(true)
-  } catch (serializeError) {
-    err = serializeError
-  } finally {
-    callback(err, binaryBlob)
-  }
+const serialize = async (dagNode) => {
+  return dagNode.toBuffer(true)
 }
 
-/**
- * @callback DeserializeCallback
- * @param {?Error} error - Error if deserialization failed
- * @param {?BitcoinBlock} dagNode - Internal representation of a Bitcoin block
- *   if deserialization was successful
- */
 /**
  * Deserialize Bitcoin block into the internal representation,
  *
  * @param {Buffer} binaryBlob - Binary representation of a Bitcoin block
- * @param {DeserializeCallback} callback - Callback that handles the
- *   return value
- * @returns {void}
+ * @returns {Promise<BitcoinBlock>} - Internal representation of a Bitcoin block
+ *   if deserialization was successful
  */
-const deserialize = (binaryBlob, callback) => {
+const deserialize = async (binaryBlob) => {
   if (binaryBlob.length !== BITCOIN_BLOCK_HEADER_SIZE) {
-    const err = new Error(
-      `Bitcoin block header needs to be ${BITCOIN_BLOCK_HEADER_SIZE} bytes`)
-    return callback(err)
+    throw new Error(`Bitcoin block header needs to be ${BITCOIN_BLOCK_HEADER_SIZE} bytes`)
   }
 
-  const dagNode = BitcoinjsBlock.fromBuffer(binaryBlob)
-  callback(null, dagNode)
+  return BitcoinjsBlock.fromBuffer(binaryBlob)
 }
 
-/**
- * @callback CidCallback
- * @param {?Error} error - Error if getting the CID failed
- * @param {?CID} cid - CID if call was successful
- */
 /**
  * Get the CID of the DAG-Node.
  *
@@ -71,28 +40,19 @@ const deserialize = (binaryBlob, callback) => {
  * @param {Object} [options] - Options to create the CID
  * @param {number} [options.version=1] - CID version number
  * @param {string} [options.hashAlg='dbl-sha2-256'] - Hashing algorithm
- * @param {CidCallback} callback - Callback that handles the return value
- * @returns {void}
+ * @returns {Promise<CID>}
  */
-const cid = (dagNode, options, callback) => {
-  if (typeof options === 'function') {
-    callback = options
-    options = {}
-  }
-  options = options || {}
+const cid = async (dagNode, options = {}) => {
   // avoid deadly embrace between resolver and util
   const hashAlg = options.hashAlg || require('./resolver').defaultHashAlg
   const version = typeof options.version === 'undefined' ? 1 : options.version
-  waterfall([
-    (cb) => {
-      try {
-        multihashing(dagNode.toBuffer(true), hashAlg, cb)
-      } catch (err) {
-        cb(err)
-      }
-    },
-    (mh, cb) => cb(null, new CID(version, 'bitcoin-block', mh))
-  ], callback)
+
+  return new Promise((resolve, reject) => {
+    multihashing(dagNode.toBuffer(true), hashAlg, (err, mh) => {
+      if (err) return reject(err)
+      resolve(new CID(version, 'bitcoin-block', mh))
+    })
+  })
 }
 
 // Convert a Bitcoin hash (as Buffer) to a CID

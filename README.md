@@ -69,12 +69,8 @@ Though it can also be used as a standalone module:
 const IpldBitcoin = require('ipld-bitcoin')
 
 // `bitcoinBlock` is some binary Bitcoin block
-IpldBitcoin.util.deserialize(bitcoinBlock, (err, dagNode) => {
-  if (err) {
-    throw err
-  }
-  console.log(dagNode)
-})
+const dagNode = await IpldBitcoin.util.deserialize(bitcoinBlock)
+console.log(dagNode)
 ```
 
 ## Contribute
