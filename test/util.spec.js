@@ -11,7 +11,7 @@ const helpers = require('./helpers')
 
 const fixtureBlockHex = loadFixture('test/fixtures/block.hex')
 const fixtureBlockHeader = helpers.headerFromHexBlock(fixtureBlockHex)
-const invalidDagNode = {invalid: 'dagNode'}
+const invalidDagNode = { invalid: 'dagNode' }
 
 describe('IPLD format util API deserialize()', () => {
   it('should work correctly', (done) => {

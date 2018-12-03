@@ -35,13 +35,13 @@
   "dependencies": {
     "async": "^2.6.1",
     "bitcoinjs-lib": "^4.0.2",
-    "cids": "~0.5.2",
-    "multihashes": "~0.4.12",
+    "cids": "~0.5.6",
+    "multihashes": "~0.4.14",
     "multihashing-async": "~0.5.1"
   },
   "devDependencies": {
-    "aegir": "^17.1.0",
-    "chai": "^4.1.2",
+    "aegir": "^17.1.1",
+    "chai": "^4.2.0",
     "dirty-chai": "^2.0.1"
   },
   "contributors": [
