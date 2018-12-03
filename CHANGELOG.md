@@ -1,3 +1,14 @@
+<a name="0.1.9"></a>
+## [0.1.9](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.8...v0.1.9) (2018-12-03)
+
+
+### Bug Fixes
+
+* **package:** update bitcoinjs-lib to version 4.0.2 ([64cde6c](https://github.com/ipld/js-ipld-bitcoin/commit/64cde6c))
+* remove git-validate as a dependency ([84d0ffc](https://github.com/ipld/js-ipld-bitcoin/commit/84d0ffc))
+
+
+
 <a name="0.1.8"></a>
 ## [0.1.8](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.7...v0.1.8) (2018-10-15)
 
