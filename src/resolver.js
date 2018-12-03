@@ -123,9 +123,9 @@ const resolveField = (dagNode, field) => {
     case 'nonce':
       return dagNode.nonce
     case 'parent':
-      return {'/': util.hashToCid(dagNode.prevHash)}
+      return { '/': util.hashToCid(dagNode.prevHash) }
     case 'tx':
-      return {'/': util.hashToCid(dagNode.merkleRoot)}
+      return { '/': util.hashToCid(dagNode.merkleRoot) }
     default:
       return null
   }

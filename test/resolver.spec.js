@@ -66,7 +66,8 @@ describe('IPLD format resolve API resolve()', () => {
       expect(err).to.not.exist()
       expect(value.remainderPath).is.empty()
       expect(value.value).to.deep.equal({
-        '/': new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')})
+        '/': new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')
+      })
       done()
     })
   })
@@ -79,7 +80,8 @@ describe('IPLD format resolve API resolve()', () => {
           expect(value.remainderPath).to.equal('timestamp')
           expect(value.value).to.deep.equal({
             '/':
-              new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')})
+              new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')
+          })
           done()
         })
     })
@@ -90,7 +92,8 @@ describe('IPLD format resolve API resolve()', () => {
         expect(err).to.not.exist()
         expect(value.remainderPath).to.equal('some/remainder')
         expect(value.value).to.deep.equal({
-          '/': new CID('z4HFzdHD15kVvtmVzeD7z9sisZ7acSC88wXS3KJGwGrnr2DwcVQ')})
+          '/': new CID('z4HFzdHD15kVvtmVzeD7z9sisZ7acSC88wXS3KJGwGrnr2DwcVQ')
+        })
         done()
       })
   })
@@ -111,7 +114,7 @@ describe('IPLD format resolver API tree()', () => {
   })
 
   it('should be able to return paths and values', (done) => {
-    IpldBitcoin.resolver.tree(fixtureBlockHeader, {values: true}, (err, value) => {
+    IpldBitcoin.resolver.tree(fixtureBlockHeader, { values: true }, (err, value) => {
       expect(err).to.not.exist()
       expect(value).to.deep.equal({
         version: 2,
@@ -119,9 +122,12 @@ describe('IPLD format resolver API tree()', () => {
         difficulty: 419740270,
         nonce: 3159344128,
         parent: {
-          '/': new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')},
+          '/': new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')
+        },
         tx: {
-          '/': new CID('z4HFzdHD15kVvtmVzeD7z9sisZ7acSC88wXS3KJGwGrnr2DwcVQ')}})
+          '/': new CID('z4HFzdHD15kVvtmVzeD7z9sisZ7acSC88wXS3KJGwGrnr2DwcVQ')
+        }
+      })
       done()
     })
   })
