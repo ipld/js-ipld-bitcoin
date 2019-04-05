@@ -34,7 +34,7 @@
   "homepage": "https://github.com/ipld/js-ipld-bitcoin#readme",
   "dependencies": {
     "async": "^2.6.1",
-    "bitcoinjs-lib": "^4.0.2",
+    "bitcoinjs-lib": "^5.0.0",
     "cids": "~0.5.6",
     "multihashes": "~0.4.14",
     "multihashing-async": "~0.5.1"
