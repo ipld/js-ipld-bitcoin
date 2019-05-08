@@ -1,3 +1,32 @@
+<a name="0.2.0"></a>
+# [0.2.0](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.9...v0.2.0) (2019-05-08)
+
+
+### Bug Fixes
+
+* **package:** update bitcoinjs-lib to version 5.0.0 ([ef99508](https://github.com/ipld/js-ipld-bitcoin/commit/ef99508))
+* **package:** update cids to version 0.6.0 ([cd36640](https://github.com/ipld/js-ipld-bitcoin/commit/cd36640))
+* **package:** update multihashing-async to version 0.6.0 ([9dc7bb7](https://github.com/ipld/js-ipld-bitcoin/commit/9dc7bb7))
+
+
+### Features
+
+* new IPLD Format API ([1a799aa](https://github.com/ipld/js-ipld-bitcoin/commit/1a799aa))
+
+
+### BREAKING CHANGES
+
+* The API is now async/await based
+
+There are numerous changes, the most significant one is that the API
+is no longer callback based, but it using async/await.
+
+For the full new API please see the [IPLD Formats spec].
+
+[IPLD Formats spec]: https://github.com/ipld/interface-ipld-format
+
+
+
 <a name="0.1.9"></a>
 ## [0.1.9](https://github.com/ipld/js-ipld-bitcoin/compare/v0.1.8...v0.1.9) (2018-12-03)
 
