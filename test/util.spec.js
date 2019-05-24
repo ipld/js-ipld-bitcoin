@@ -92,7 +92,7 @@ describe('IPLD format util API serialize()', () => {
   })
 })
 
-describe('IPLD format util API cid()', async () => {
+describe('IPLD format util API cid()', () => {
   const expectedCid = new CID(1, 'bitcoin-block', Buffer.from(
     '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
     'hex'))
