@@ -1,3 +1,14 @@
+<a name="0.3.1"></a>
+## [0.3.1](https://github.com/ipld/js-ipld-bitcoin/compare/v0.3.0...v0.3.1) (2020-01-13)
+
+
+### Bug Fixes
+
+* **package:** update multicodec to version 1.0.0 ([fb8226e](https://github.com/ipld/js-ipld-bitcoin/commit/fb8226e))
+* **package:** update multihashing-async to version 0.8.0 ([5ef0714](https://github.com/ipld/js-ipld-bitcoin/commit/5ef0714))
+
+
+
 <a name="0.3.0"></a>
 # [0.3.0](https://github.com/ipld/js-ipld-bitcoin/compare/v0.2.0...v0.3.0) (2019-05-10)
 
