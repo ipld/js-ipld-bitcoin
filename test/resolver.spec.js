@@ -25,12 +25,12 @@ describe('IPLD format resolve API resolve()', () => {
     verifyPath(fixtureBlockHeader, 'version', 2)
   })
 
-  it('should return the timestamp', () => {
-    verifyPath(fixtureBlockHeader, 'timestamp', 1386981279)
+  it('should return the time', () => {
+    verifyPath(fixtureBlockHeader, 'time', 1386981279)
   })
 
   it('should return the difficulty', () => {
-    verifyPath(fixtureBlockHeader, 'difficulty', 419740270)
+    verifyPath(fixtureBlockHeader, 'difficulty', 908350862.437022)
   })
 
   it('should return the nonce', () => {
@@ -63,8 +63,8 @@ describe('IPLD format resolve API resolve()', () => {
 
   it('should return a link and remaining path when parent is requested', () => {
     const value = IpldBitcoin.resolver.resolve(
-      fixtureBlockHeader, 'parent/timestamp')
-    expect(value.remainderPath).to.equal('timestamp')
+      fixtureBlockHeader, 'parent/time')
+    expect(value.remainderPath).to.equal('time')
     expect(value.value.equals(
       new CID('z4HFzdHLxSgJvCMJrsDtV7MgqiGALZdbbxgcTLVUUXQGBkGYjLb')
     )).to.be.true()
@@ -75,7 +75,7 @@ describe('IPLD format resolve API resolve()', () => {
       fixtureBlockHeader, 'tx/some/remainder')
     expect(value.remainderPath).to.equal('some/remainder')
     expect(value.value.equals(
-      new CID('z4HFzdHD15kVvtmVzeD7z9sisZ7acSC88wXS3KJGwGrnr2DwcVQ')
+      new CID('z4HhYA9NygxtQnqV2CxzHMxPZdu2q3UB48miq8umuuwKkF3zKpv')
     )).to.be.true()
   })
 
@@ -90,15 +90,19 @@ describe('IPLD format resolver API tree()', () => {
     const value = IpldBitcoin.resolver.tree(fixtureBlockHeader)
     const paths = [...value]
     expect(paths).to.have.members([
+      'hash',
       'version',
-      'timestamp',
-      'difficulty',
+      'versionHex',
+      'merkleroot',
+      'tx',
+      'time',
       'nonce',
-      'parent',
-      'tx'
+      'bits',
+      'difficulty',
+      'previousblockhash',
+      'parent'
     ])
   })
-
   it('should return an error if block is invalid', () => {
     expect(() => {
       IpldBitcoin.resolver.tree(invalidBlock).next()

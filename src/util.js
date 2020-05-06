@@ -1,6 +1,6 @@
 'use strict'
 
-const BitcoinjsBlock = require('bitcoinjs-lib').Block
+const { BitcoinBlock, fromHashHex } = require('bitcoin-block')
 const CID = require('cids')
 const multicodec = require('multicodec')
 const multihashes = require('multihashes')
@@ -9,6 +9,8 @@ const multihashing = require('multihashing-async')
 const BITCOIN_BLOCK_HEADER_SIZE = 80
 const CODEC = multicodec.BITCOIN_BLOCK
 const DEFAULT_HASH_ALG = multicodec.DBL_SHA2_256
+const BITCOIN_BLOCK_CODEC = 'bitcoin-block'
+const BITCOIN_TX_CODEC = 'bitcoin-tx'
 
 /**
  * Serialize internal representation into a binary Bitcoin block.
@@ -17,7 +19,7 @@ const DEFAULT_HASH_ALG = multicodec.DBL_SHA2_256
  * @returns {Buffer}
  */
 const serialize = (dagNode) => {
-  return dagNode.toBuffer(true)
+  return BitcoinBlock.fromPorcelain(dagNode).encode()
 }
 
 /**
@@ -32,38 +34,11 @@ const deserialize = (binaryBlob) => {
       `Bitcoin block header needs to be ${BITCOIN_BLOCK_HEADER_SIZE} bytes`)
   }
 
-  const deserialized = BitcoinjsBlock.fromBuffer(binaryBlob)
-
-  const getters = {
-    difficulty: function () {
-      return this.bits
-    },
-    parent: function () {
-      return hashToCid(this.prevHash)
-    },
-    tx: function () {
-      return hashToCid(this.merkleRoot)
-    }
-  }
-  Object.entries(getters).forEach(([name, fun]) => {
-    Object.defineProperty(deserialized, name, {
-      enumerable: true,
-      get: fun
-    })
-  })
-
-  const removeEnumberables = [
-    'bits',
-    'merkleRoot',
-    'prevHash',
-    'transactions',
-    'witnessCommit'
-  ]
-  removeEnumberables.forEach((field) => {
-    if (field in deserialized) {
-      Object.defineProperty(deserialized, field, { enumerable: false })
-    }
-  })
+  const deserialized = BitcoinBlock.decodeHeaderOnly(binaryBlob).toPorcelain()
+  deserialized.parent =
+    hashToCid(fromHashHex(deserialized.previousblockhash), BITCOIN_BLOCK_CODEC)
+  deserialized.tx =
+    hashToCid(fromHashHex(deserialized.merkleroot), BITCOIN_TX_CODEC)
 
   return deserialized
 }
@@ -89,10 +64,10 @@ const cid = async (binaryBlob, userOptions) => {
 }
 
 // Convert a Bitcoin hash (as Buffer) to a CID
-const hashToCid = (hash) => {
+const hashToCid = (hash, codec = BITCOIN_BLOCK_CODEC) => {
   const multihash = multihashes.encode(hash, DEFAULT_HASH_ALG)
   const cidVersion = 1
-  const cid = new CID(cidVersion, 'bitcoin-block', multihash)
+  const cid = new CID(cidVersion, codec, multihash)
   return cid
 }
 

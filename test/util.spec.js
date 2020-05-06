@@ -8,6 +8,9 @@ const expect = chai.expect
 chai.use(dirtyChai)
 const CID = require('cids')
 const multicodec = require('multicodec')
+const { fromHashHex } = require('bitcoin-block')
+const multihash = require('multihashes')
+
 const IpldBitcoin = require('../src/index')
 const helpers = require('./helpers')
 
@@ -15,16 +18,25 @@ const fixtureBlockHex = loadFixture('test/fixtures/block.hex')
 const fixtureBlockHeader = helpers.headerFromHexBlock(fixtureBlockHex)
 const invalidDagNode = { invalid: 'dagNode' }
 
+function cidFromHashHex (hash, codec) {
+  return new CID(1, codec, multihash.encode(fromHashHex(hash), 'dbl-sha2-256'))
+}
+
 describe('IPLD format util API deserialize()', () => {
   it('should work correctly', () => {
     const dagNode = IpldBitcoin.util.deserialize(fixtureBlockHeader)
-    verifyBlock(dagNode, {
+    expect(dagNode).to.deep.equal({
+      hash: '0000000000000002909eabb1da3710351faf452374946a0dfdb247d491c6c23e',
       version: 2,
-      prevHash: '87d6242b27d248a9e145fe764a0bcef03a403883a2e4c8590200000000000000',
-      merkleRoot: '11a5b9a70acebedbbf71ef8ca341e8a98cf279c49eee8f92e10a2227743b6aeb',
-      timestamp: 1386981279,
-      bits: 419740270,
-      nonce: 3159344128
+      versionHex: '00000002',
+      merkleroot: 'eb6a3b7427220ae1928fee9ec479f28ca9e841a38cef71bfdbbece0aa7b9a511',
+      tx: cidFromHashHex('eb6a3b7427220ae1928fee9ec479f28ca9e841a38cef71bfdbbece0aa7b9a511', 'bitcoin-tx'),
+      time: 1386981279,
+      nonce: 3159344128,
+      bits: '1904ba6e',
+      difficulty: 908350862.437022,
+      previousblockhash: '000000000000000259c8e4a28338403af0ce0b4a76fe45e1a948d2272b24d687',
+      parent: cidFromHashHex('000000000000000259c8e4a28338403af0ce0b4a76fe45e1a948d2272b24d687', 'bitcoin-block')
     })
   })
 
@@ -32,13 +44,19 @@ describe('IPLD format util API deserialize()', () => {
     const segwitBlockHex = loadFixture('test/fixtures/segwit.hex')
     const segwitBlockHeader = helpers.headerFromHexBlock(segwitBlockHex)
     const dagNode = IpldBitcoin.util.deserialize(segwitBlockHeader)
-    verifyBlock(dagNode, {
+
+    expect(dagNode).to.deep.equal({
+      hash: '00000000000000000006d921ce47d509544dec06838a2ff9303c50d12f4a0199',
       version: 536870914,
-      prevHash: '1b7c39197e95b49b38ff96c7bf9e1db4a9f36b5698ecd6000000000000000000',
-      merkleRoot: 'c3f2244dfb3c833c62e72e05b7fd1bd6bcba2d6cd455984a1059db7a4bf38348',
-      timestamp: 1503722576,
-      bits: 402734313,
-      nonce: 3781004001
+      versionHex: '20000002',
+      merkleroot: '4883f34b7adb59104a9855d46c2dbabcd61bfdb7052ee7623c833cfb4d24f2c3',
+      tx: cidFromHashHex('4883f34b7adb59104a9855d46c2dbabcd61bfdb7052ee7623c833cfb4d24f2c3', 'bitcoin-tx'),
+      time: 1503722576,
+      nonce: 3781004001,
+      bits: '18013ce9',
+      difficulty: 888171856257.3206,
+      previousblockhash: '000000000000000000d6ec98566bf3a9b41d9ebfc796ff389bb4957e19397c1b',
+      parent: cidFromHashHex('000000000000000000d6ec98566bf3a9b41d9ebfc796ff389bb4957e19397c1b', 'bitcoin-block')
     })
   })
 
@@ -46,13 +64,18 @@ describe('IPLD format util API deserialize()', () => {
     const segwitBlockHex = loadFixture('test/fixtures/segwit2.hex')
     const segwitBlockHeader = helpers.headerFromHexBlock(segwitBlockHex)
     const dagNode = IpldBitcoin.util.deserialize(segwitBlockHeader)
-    verifyBlock(dagNode, {
+    expect(dagNode).to.deep.equal({
+      hash: '000000000000000000ac2a49162ec7c457212134e46ab24daa63e0fae949bd90',
       version: 536870914,
-      prevHash: '92f0d678374dbb0a205345d38f35be782412207bbdaa71000000000000000000',
-      merkleRoot: '99e3557bb520c3d45d6eb6ee18f93b3665bf4c8d9747200db4292fdbacc278c3',
-      timestamp: 1503851731,
-      bits: 402734313,
-      nonce: 3911763601
+      versionHex: '20000002',
+      merkleroot: 'c378c2acdb2f29b40d2047978d4cbf65363bf918eeb66e5dd4c320b57b55e399',
+      tx: cidFromHashHex('c378c2acdb2f29b40d2047978d4cbf65363bf918eeb66e5dd4c320b57b55e399', 'bitcoin-tx'),
+      time: 1503851731,
+      nonce: 3911763601,
+      bits: '18013ce9',
+      difficulty: 888171856257.3206,
+      previousblockhash: '00000000000000000071aabd7b20122478be358fd34553200abb4d3778d6f092',
+      parent: cidFromHashHex('00000000000000000071aabd7b20122478be358fd34553200abb4d3778d6f092', 'bitcoin-block')
     })
   })
 
@@ -60,13 +83,18 @@ describe('IPLD format util API deserialize()', () => {
     const segwitBlockHex = loadFixture('test/fixtures/segwit3.hex')
     const segwitBlockHeader = helpers.headerFromHexBlock(segwitBlockHex)
     const dagNode = IpldBitcoin.util.deserialize(segwitBlockHeader)
-    verifyBlock(dagNode, {
+    expect(dagNode).to.deep.equal({
+      hash: '000000000000000000d172ef46944db6127dbebe815664f26f37fef3e22fd65b',
       version: 536870912,
-      prevHash: '92fed79ebe58e1604dc08037488567c0881e1ae6a67831010000000000000000',
-      merkleRoot: '654f3617284e0c0f71baeaea9f54e337645550832b63de3dce4b66b2fbb27309',
-      timestamp: 1503848099,
-      bits: 402734313,
-      nonce: 2945767029
+      versionHex: '20000000',
+      merkleroot: '0973b2fbb2664bce3dde632b8350556437e3549feaeaba710f0c4e2817364f65',
+      tx: cidFromHashHex('0973b2fbb2664bce3dde632b8350556437e3549feaeaba710f0c4e2817364f65', 'bitcoin-tx'),
+      time: 1503848099,
+      nonce: 2945767029,
+      bits: '18013ce9',
+      difficulty: 888171856257.3206,
+      previousblockhash: '0000000000000000013178a6e61a1e88c06785483780c04d60e158be9ed7fe92',
+      parent: cidFromHashHex('0000000000000000013178a6e61a1e88c06785483780c04d60e158be9ed7fe92', 'bitcoin-block')
     })
   })
 
@@ -120,12 +148,3 @@ describe('IPLD format util API cid()', () => {
     expect(cid.equals(expectedCid)).to.be.true()
   })
 })
-
-const verifyBlock = (dagNode, expected) => {
-  expect(dagNode.version).to.equal(expected.version)
-  expect(dagNode.prevHash.toString('hex')).to.equal(expected.prevHash)
-  expect(dagNode.merkleRoot.toString('hex')).to.equal(expected.merkleRoot)
-  expect(dagNode.timestamp).to.equal(expected.timestamp)
-  expect(dagNode.bits).to.equal(expected.bits)
-  expect(dagNode.nonce).to.equal(expected.nonce)
-}
