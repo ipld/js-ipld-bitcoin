@@ -107,8 +107,9 @@ describe('IPLD format util API deserialize()', () => {
 })
 
 describe('IPLD format util API serialize()', () => {
-  it('should round-trip (de)serialization correctly', () => {
+  it.only('should round-trip (de)serialization correctly', () => {
     const dagNode = IpldBitcoin.util.deserialize(fixtureBlockHeader)
+    console.log('dagNode', dagNode)
     const binaryBlob = IpldBitcoin.util.serialize(dagNode)
     expect(binaryBlob).to.deep.equal(fixtureBlockHeader)
   })

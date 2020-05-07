@@ -19,7 +19,8 @@ const BITCOIN_TX_CODEC = 'bitcoin-tx'
  * @returns {Buffer}
  */
 const serialize = (dagNode) => {
-  return BitcoinBlock.fromPorcelain(dagNode).encode()
+  // remove 'tx' property, otherwise BitcoinBlock will try to read a transaction array
+  return BitcoinBlock.fromPorcelain(Object.assign({}, dagNode, { tx: null })).encode()
 }
 
 /**
