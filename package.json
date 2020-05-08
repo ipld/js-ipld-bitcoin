@@ -32,7 +32,7 @@
     "bitcoin-block": "^1.1.0",
     "buffer": "^5.6.0",
     "cids": "~0.8.0",
-    "js-multiformats": "github:rvagg/js-multiformats",
+    "multiformats": "github:rvagg/js-multiformats",
     "multicodec": "^1.0.0",
     "multihashes": "~0.4.14",
     "multihashing-async": "~0.8.0"
