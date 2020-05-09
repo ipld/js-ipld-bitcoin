@@ -20,20 +20,28 @@ function encodeNoWitness (obj) {
   return _encode(obj, BitcoinTransaction.HASH_NO_WITNESS)
 }
 
-async function * _encodeAll (multiformats, tx, arg) {
+async function * _encodeAll (multiformats, deserialized, arg) {
   if (typeof multiformats !== 'object' || typeof multiformats.multihash !== 'object' ||
       typeof multiformats.multihash.encode !== 'function' ||
       typeof multiformats.CID !== 'function') {
     throw new TypeError('multiformats argument must have multihash and CID capabilities')
   }
 
-  if (!Array.isArray(tx)) {
-    throw new TypeError('tx argument must be an array')
+  if (typeof deserialized !== 'object' || !Array.isArray(deserialized.tx)) {
+    throw new TypeError('deserialized argument must be a Bitcoin block representation')
   }
 
   const hashes = []
-  for (const transaction of tx) {
-    const binary = encode(transaction, arg)
+  for (let i = 0; i < deserialized.tx.length; i++) {
+    if (i === 0 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
+      // for full-witness merkles, the coinbase is replaced with a 0x00.00 hash in the first
+      // position, we don't give this a CID+Binary designation but pretend it's not there on
+      // decode
+      hashes.push(Buffer.alloc(32))
+      continue
+    }
+    const transaction = deserialized.tx[i]
+    const binary = _encode(transaction, arg)
     const hash = dblSha2256(binary)
     const mh = await multiformats.multihash.encode(hash, HASH_ALG)
     const cid = new multiformats.CID(1, CODEC_CODE, mh)
@@ -59,12 +67,15 @@ function encodeAllNoWitness (multiformats, obj) {
 }
 
 function decodeInit (multiformats) {
+  // TODO: decode 64-byte bufs as pairs of links in a merkle, but treat special-case 0x00..00 (NULL)
+  // as if it weren't there
   return async function decode (buf) {
     if (!Buffer.isBuffer(buf)) {
       throw new TypeError('Can only decode() a Buffer or Uint8Array')
     }
 
-    const deserialized = BitcoinTransaction.decode(buf).toPorcelain()
+    const tx = BitcoinTransaction.decode(buf)
+    const deserialized = tx.toPorcelain()
     for (const vin of deserialized.vin) {
       if (typeof vin.txid === 'string' && /^[0-9a-f]{64}$/.test(vin.txid)) {
         const txidMh = await multiformats.multihash.encode(fromHashHex(vin.txid), HASH_ALG)

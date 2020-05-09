@@ -7,6 +7,7 @@ const base32 = require('multiformats/bases/base32')
 const { fromHashHex } = require('bitcoin-block')
 const bitcoin = require('../src/bitcoin')
 const bitcoinTx = require('../src/bitcoin-tx')
+const bitcoinWitnessCommitment = require('../src/bitcoin-witness-commitment')
 const fixtures = require('./fixtures')
 
 const CODEC_TX_CODE = 0xb1
@@ -65,31 +66,84 @@ describe('bitcoin', () => {
     }
   })
 
+  async function verifyMerkle (name, witness) {
+    // how many nodes of this merkle do we expect to see?
+    let expectedNodes = blocks[name].data.tx.length
+    let last = expectedNodes
+    while (last > 1) {
+      last = Math.ceil(last / 2)
+      expectedNodes += last
+    }
+
+    let index = 0
+    if (witness) {
+      index = 1 // we skip the coinbase for full merkle
+    }
+    let lastCid
+    for await (const { cid, binary } of bitcoinTx[witness ? 'encodeAll' : 'encodeAllNoWitness'](multiformats, blocks[name].data)) {
+      if (index < blocks[name].data.tx.length) {
+        // one of the base transactions
+        const [hashExpected, txidExpected, start, end] = blocks[name].meta.tx[index]
+        let expectedCid
+        if (witness || !txidExpected) {
+          // not segwit, encoded block should be identical
+          assert.strictEqual(binary.length, end - start, `got expected block length (${index})`)
+          expectedCid = txHashToCid(hashExpected)
+        } else {
+          assert(binary.length < end - start - 2, `got approximate expected block length (${binary.length}, ${end - start}`)
+          expectedCid = txHashToCid(txidExpected)
+        }
+        assert.deepEqual(cid, expectedCid)
+      } else {
+        // one of the inner or root merkle nodes
+        assert.strictEqual(binary.length, 64)
+      }
+      index++
+      lastCid = cid
+    }
+
+    if (!witness) {
+      assert.deepEqual(lastCid, blocks[name].expectedHeader.tx, 'got expected merkle root')
+    }
+    assert.strictEqual(index, expectedNodes, 'got correct number of merkle nodes')
+
+    return lastCid
+  }
+
+  // manually find the witness commitment inside the coinbase.
+  // it's in _one of_ the vout's, one that's 38 bytes long and starts with a special prefix
+  // which we need to strip out to find a 32-byte hash
+  function findWitnessCommitment (block) {
+    const coinbase = block.tx[0]
+    for (const vout of coinbase.vout) {
+      const spk = vout.scriptPubKey.hex
+      if (spk.length === 38 * 2 && spk.startsWith('6a24aa21a9ed')) {
+        return Buffer.from(spk.slice(12), 'hex')
+      }
+    }
+  }
+
   describe('merkle', () => {
     for (const name of fixtures.names) {
-      test(`encode "${name}" transactions into merkle`, async () => {
-        let index = 0
-        let lastCid
-        for await (const { cid, binary } of bitcoinTx.encodeAllNoWitness(multiformats, blocks[name].data.tx)) {
-          if (index < blocks[name].data.tx.length) {
-            // one of the base transactions
-            const [hashExpected, txidExpected, start, end] = blocks[name].meta.tx[index]
-            let expectedCid
-            if (!txidExpected) {
-              // not segwit, encoded block should be identical
-              assert.strictEqual(binary.length, end - start, 'got expected block length')
-              expectedCid = txHashToCid(hashExpected)
-            } else {
-              assert(binary.length < end - start - 2, `got approximate expected block length (${binary.length}, ${end - start}`)
-              expectedCid = txHashToCid(txidExpected)
-            }
-            assert.deepEqual(cid, expectedCid)
-          }
-          // console.log('merkle cid', cid)
-          index++
-          lastCid = cid
+      test(`encode "${name}" transactions into no-witness merkle`, async () => {
+        return verifyMerkle(name, false)
+      })
+
+      test(`encode "${name}" transactions into segwit merkle`, async () => {
+        const lastCid = await verifyMerkle(name, true)
+        const expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
+        if (!expectedWitnessCommitment) {
+          assert.strictEqual(name, 'block', 'non-segwit block shouldn\'t have witness commitment, all others should')
+        } else {
+          const { cid, binary } =
+            await bitcoinWitnessCommitment.encodeWitnessCommitment(multiformats, blocks[name].data, lastCid)
+          const hash = multiformats.multihash.decode(cid.multihash).digest
+          assert.strictEqual(hash.toString('hex'), expectedWitnessCommitment.toString('hex'), 'got expected witness commitment')
+          assert.strictEqual(binary.length, 64, 'correct block length')
+          // this isn't true for all blocks, just most of them, Bitcoin Core does NULL nonces but it's not a strict
+          // requirement so some blocks have novel hashes
+          assert.deepEqual(binary.slice(32).toString('hex'), ''.padStart(64, '0'), 'got expected NULL nonce')
         }
-        assert.deepEqual(lastCid, blocks[name].expectedHeader.tx, 'got expected merkle root')
       })
     }
   })
