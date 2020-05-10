@@ -90,7 +90,7 @@ function decodeInit (multiformats) {
     if (buf.length !== 64) {
       throw new TypeError('bitcoin-witness-commitment must be a 64-byte Buffer')
     }
-    const witnessHash = multiformats.multihash.encode(buf.slice(0, 32))
+    const witnessHash = multiformats.multihash.encode(buf.slice(0, 32), HASH_ALG)
     const nonce = buf.slice(32)
     const witnessMerkleRoot = new multiformats.CID(1, CODEC_CODE, witnessHash)
     return { witnessMerkleRoot, nonce }

@@ -4,6 +4,7 @@ const HASH_ALG = require('./dbl-sha2-256').name
 const dblSha2256 = require('./dbl-sha2-256').encode
 const CODEC = 'bitcoin-tx'
 const CODEC_CODE = 0xb1
+const NULL_HASH = Buffer.alloc(32)
 
 function _encode (obj, arg) {
   if (typeof obj !== 'object') {
@@ -67,11 +68,23 @@ function encodeAllNoWitness (multiformats, obj) {
 }
 
 function decodeInit (multiformats) {
-  // TODO: decode 64-byte bufs as pairs of links in a merkle, but treat special-case 0x00..00 (NULL)
-  // as if it weren't there
   return async function decode (buf) {
     if (!Buffer.isBuffer(buf)) {
       throw new TypeError('Can only decode() a Buffer or Uint8Array')
+    }
+
+    if (buf.length === 64) {
+      // is some kind of merkle node
+      let left = buf.slice(0, 32)
+      const right = buf.slice(32)
+      if (NULL_HASH.equals(left)) { // in the witness merkle, the coinbase is replaced with 0x00..00
+        left = null
+      }
+      const leftMh = left ? multiformats.multihash.encode(left, HASH_ALG) : null
+      const rightMh = multiformats.multihash.encode(right, HASH_ALG)
+      const leftCid = left ? new multiformats.CID(1, CODEC_CODE, leftMh) : null
+      const rightCid = new multiformats.CID(1, CODEC_CODE, rightMh)
+      return [leftCid, rightCid]
     }
 
     const tx = BitcoinTransaction.decode(buf)
