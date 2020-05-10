@@ -11,6 +11,7 @@ const bitcoinWitnessCommitment = require('../src/bitcoin-witness-commitment')
 const fixtures = require('./fixtures')
 
 const CODEC_TX_CODE = 0xb1
+const CODEC_WITNESS_COMMITMENT_CODE = 0xb2
 // the begining of a dbl-sha2-256 multihash, prepend to hash or txid
 const MULTIHASH_DBLSHA2256_LEAD = '5620'
 
@@ -25,6 +26,10 @@ function blockDataToHeader (data) {
 
 function txHashToCid (hash) {
   return new multiformats.CID(1, CODEC_TX_CODE, Buffer.from(`${MULTIHASH_DBLSHA2256_LEAD}${hash}`, 'hex'))
+}
+
+function witnessCommitmentHashToCid (hash) {
+  return new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, Buffer.from(`${MULTIHASH_DBLSHA2256_LEAD}${hash}`, 'hex'))
 }
 
 describe('bitcoin', () => {
@@ -63,14 +68,16 @@ describe('bitcoin', () => {
     })
 
     for (const name of fixtures.names) {
-      test(`decode "${name}", full raw`, async () => {
-        const decoded = await multiformats.decode(blocks[name].raw, 'bitcoin-block')
-        assert.deepEqual(decoded, blocks[name].expectedHeader, 'decoded header correctly')
-      })
+      describe(`block "${name}"`, () => {
+        test('decode full raw', async () => {
+          const decoded = await multiformats.decode(blocks[name].raw, 'bitcoin-block')
+          assert.deepEqual(decoded, blocks[name].expectedHeader, 'decoded header correctly')
+        })
 
-      test(`encode "${name}"`, async () => {
-        const encoded = await multiformats.encode(blocks[name].expectedHeader, 'bitcoin-block')
-        assert.strictEqual(encoded.toString('hex'), blocks[name].raw.slice(0, 80).toString('hex'), 'raw bytes match')
+        test('encode', async () => {
+          const encoded = await multiformats.encode(blocks[name].expectedHeader, 'bitcoin-block')
+          assert.strictEqual(encoded.toString('hex'), blocks[name].raw.slice(0, 80).toString('hex'), 'raw bytes match')
+        })
       })
     }
   })
@@ -94,6 +101,8 @@ describe('bitcoin', () => {
       index = 1 // we skip the coinbase for full merkle
       thisLayer.push(null)
     }
+
+    let witnessCommitment = null
     for await (const { cid, binary } of bitcoinTx[witness ? 'encodeAll' : 'encodeAllNoWitness'](multiformats, blocks[name].data)) {
       assert(Buffer.isBuffer(binary))
 
@@ -104,6 +113,12 @@ describe('bitcoin', () => {
         // one of the base transactions
         const [hashExpected, txidExpected, start, end] = blocks[name].meta.tx[index]
         let expectedCid
+        if (index === 0) {
+          // if this is a segwit merkle on a segwit block, the coinbase should have a witnessCommitment
+          // this will not exist for non-segwit blocks and we won't have index===0 for full-witness
+          // merkles (the coinbase is ignored)
+          witnessCommitment = decoded.witnessCommitment
+        }
         if (witness || !txidExpected) {
           // not segwit, encoded block should be identical
           assert.strictEqual(binary.length, end - start, `got expected block length (${index})`)
@@ -165,7 +180,7 @@ describe('bitcoin', () => {
     }
     assert.strictEqual(index, expectedNodes, 'got correct number of merkle nodes')
 
-    return lastCid
+    return { root: lastCid, witnessCommitment }
   }
 
   // manually find the witness commitment inside the coinbase.
@@ -183,20 +198,42 @@ describe('bitcoin', () => {
 
   describe('merkle', () => {
     for (const name of fixtures.names) {
-      test(`encode "${name}" transactions into no-witness merkle`, async () => {
-        return verifyMerkle(name, false)
-      })
+      describe(`block "${name}"`, () => {
+        let expectedWitnessCommitment
+        before(() => {
+          expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
+          if (!expectedWitnessCommitment) {
+            // this isn't done inside a test() but it's a sanity check on our fixture data, not the test data
+            assert.strictEqual(name, 'block', 'non-segwit block shouldn\'t have witness commitment, all others should')
+          }
+        })
 
-      test(`encode "${name}" transactions into segwit merkle & witness commitment`, async () => {
-        const lastCid = await verifyMerkle(name, true)
+        test('encode transactions into no-witness merkle', async () => {
+          const { witnessCommitment } = await verifyMerkle(name, false)
+          if (name === 'block') {
+            assert.isUndefined(witnessCommitment, 'no witness commitment for non-witness merkle')
+          } else {
+            assert(multiformats.CID.isCID(witnessCommitment), 'witness commitment exists and is a CID')
+            assert.strictEqual(witnessCommitment.code, 0xb2, 'witness commitment CID is correct')
+            const wcmh = multiformats.multihash.decode(witnessCommitment.multihash)
+            assert.strictEqual(wcmh.code, 0x56, 'witness commitment CID has correct hash alg')
+            assert.deepEqual(wcmh.digest, expectedWitnessCommitment, 'witness commitment CID has correct hash')
+          }
+        })
 
-        // witness commitment
-        const expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
-        if (!expectedWitnessCommitment) {
-          assert.strictEqual(name, 'block', 'non-segwit block shouldn\'t have witness commitment, all others should')
-        } else {
+        test('encode transactions into segwit merkle & witness commitment', async () => {
+          const { root, witnessCommitment } = await verifyMerkle(name, true)
+
+          // witness commitment
+          assert.strictEqual(witnessCommitment, null, 'shouldn\'t find a witness commitment in the full-witness merkle')
+
+          if (name === 'block') {
+            // nothing else to test here
+            return
+          }
+
           const { cid, binary } =
-            await bitcoinWitnessCommitment.encodeWitnessCommitment(multiformats, blocks[name].data, lastCid)
+            await bitcoinWitnessCommitment.encodeWitnessCommitment(multiformats, blocks[name].data, root)
           const hash = multiformats.multihash.decode(cid.multihash).digest
           assert.strictEqual(hash.toString('hex'), expectedWitnessCommitment.toString('hex'), 'got expected witness commitment')
           assert.strictEqual(binary.length, 64, 'correct block length')
@@ -208,48 +245,63 @@ describe('bitcoin', () => {
           assert.strictEqual(typeof decoded, 'object', 'correct decoded witness commitment form')
           assert(Buffer.isBuffer(decoded.nonce), 'correct decoded witness commitment form')
           assert(multiformats.CID.isCID(decoded.witnessMerkleRoot), 'correct decoded witness commitment form')
-        }
+        })
       })
     }
   })
 
   describe('transactions', () => {
     for (const name of fixtures.names) {
-      test(`decode and encode "${name}" transactions`, async () => {
-        for (let ii = 0; ii < blocks[name].meta.tx.length; ii++) {
-          // known metadata of the transaction, its hash, txid and byte location in the block
-          const [hashExpected, txidExpected, start, end] = blocks[name].meta.tx[ii]
-          const txExpected = blocks[name].data.tx[ii]
-
-          // decode
-          const txRaw = blocks[name].raw.slice(start, end)
-          const decoded = await multiformats.decode(txRaw, 'bitcoin-tx')
-          assert.deepEqual(decoded, txExpected, 'decoded matches')
-
-          // encode
-          const encoded = await multiformats.encode(txExpected, 'bitcoin-tx')
-          assert.strictEqual(encoded.toString('hex'), txRaw.toString('hex'), 'encoded raw bytes match')
-
-          // generate CID from bytes, compare to known hash
-          const hash = await multiformats.multihash.hash(encoded, 'dbl-sha2-256')
-          const cid = new multiformats.CID(1, CODEC_TX_CODE, hash)
-          const expectedCid = txHashToCid(hashExpected)
-          assert.strictEqual(cid.toString(), expectedCid.toString(), 'got expected CID from bytes')
-
-          if (txidExpected) {
-            // is a segwit transaction, check we can encode it without witness data properly
-            // by comparing to known txid (hash with no witness)
-            const encodedNoWitness = bitcoinTx.encodeNoWitness(txExpected) // go directly because this isn't a registered stand-alone coded
-            const hashNoWitness = await multiformats.multihash.hash(encodedNoWitness, 'dbl-sha2-256')
-            const cidNoWitness = new multiformats.CID(1, CODEC_TX_CODE, hashNoWitness)
-            const expectedCidNoWitness = txHashToCid(txidExpected)
-            assert.strictEqual(cidNoWitness.toString(), expectedCidNoWitness.toString(), 'got expected CID from no-witness bytes')
-          } else {
-            // is not a segwit transaction, check that segwit encoding is identical to standard encoding
-            const encodedNoWitness = bitcoinTx.encodeNoWitness(txExpected) // go directly because this isn't a registered stand-alone coded
-            assert.strictEqual(encodedNoWitness.toString('hex'), encoded.toString('hex'), 'encodes the same with or without witness data')
+      describe(`block "${name}"`, () => {
+        // known metadata of the transaction, its hash, txid and byte location in the block
+        async function forEachTx (txcb) {
+          for (let index = 0; index < blocks[name].meta.tx.length; index++) {
+            const [hashExpected, txidExpected, start, end] = blocks[name].meta.tx[index]
+            const txExpected = blocks[name].data.tx[index]
+            const txRaw = blocks[name].raw.slice(start, end)
+            await txcb({ index, hashExpected, txidExpected, start, end, txExpected, txRaw })
           }
         }
+
+        test('decode', async () => {
+          return forEachTx(async ({ index, txRaw, txExpected }) => {
+            const decoded = await multiformats.decode(txRaw, 'bitcoin-tx')
+            if (index === 0 && name !== 'block') { // coinbase for segwit block
+              // the coinbase for segwit blocks is decorated with a CID version of the witness commitment
+              const expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
+              txExpected.witnessCommitment = witnessCommitmentHashToCid(expectedWitnessCommitment.toString('hex'))
+            }
+            assert.deepEqual(decoded, txExpected, 'got properly formed transaction')
+          })
+        })
+
+        test('encode', async () => {
+          return forEachTx(async ({ index, txRaw, txExpected, hashExpected, txidExpected }) => {
+            // encode
+            const encoded = await multiformats.encode(txExpected, 'bitcoin-tx')
+            assert.strictEqual(encoded.toString('hex'), txRaw.toString('hex'), 'encoded raw bytes match')
+
+            // generate CID from bytes, compare to known hash
+            const hash = await multiformats.multihash.hash(encoded, 'dbl-sha2-256')
+            const cid = new multiformats.CID(1, CODEC_TX_CODE, hash)
+            const expectedCid = txHashToCid(hashExpected)
+            assert.strictEqual(cid.toString(), expectedCid.toString(), 'got expected CID from bytes')
+
+            if (txidExpected) {
+              // is a segwit transaction, check we can encode it without witness data properly
+              // by comparing to known txid (hash with no witness)
+              const encodedNoWitness = bitcoinTx.encodeNoWitness(txExpected) // go directly because this isn't a registered stand-alone coded
+              const hashNoWitness = await multiformats.multihash.hash(encodedNoWitness, 'dbl-sha2-256')
+              const cidNoWitness = new multiformats.CID(1, CODEC_TX_CODE, hashNoWitness)
+              const expectedCidNoWitness = txHashToCid(txidExpected)
+              assert.strictEqual(cidNoWitness.toString(), expectedCidNoWitness.toString(), 'got expected CID from no-witness bytes')
+            } else {
+              // is not a segwit transaction, check that segwit encoding is identical to standard encoding
+              const encodedNoWitness = bitcoinTx.encodeNoWitness(txExpected) // go directly because this isn't a registered stand-alone coded
+              assert.strictEqual(encodedNoWitness.toString('hex'), encoded.toString('hex'), 'encodes the same with or without witness data')
+            }
+          })
+        })
       })
     }
   })

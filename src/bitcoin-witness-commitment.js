@@ -1,11 +1,7 @@
 const { Buffer } = require('buffer')
 const { BitcoinTransaction } = require('bitcoin-block')
-const HASH_ALG = require('./dbl-sha2-256').name
 const dblSha2256 = require('./dbl-sha2-256').encode
-const CODEC_TX_CODE = require('./bitcoin-tx').CODEC_CODE
-const CODEC_TX = require('./bitcoin-tx').CODEC
-const CODEC = 'bitcoin-witness-commitment'
-const CODEC_CODE = 0xb2
+const { HASH_ALG, CODEC_TX, CODEC_TX_CODE, CODEC_WITNESS_COMMITMENT, CODEC_WITNESS_COMMITMENT_CODE } = require('./constants')
 
 /*
  * type BitcoinWitnessCommitment struct {
@@ -56,7 +52,7 @@ async function encodeWitnessCommitment (multiformats, deserialized, witnessMerkl
   }
 
   const mh = await multiformats.multihash.encode(hash, HASH_ALG)
-  const cid = new multiformats.CID(1, CODEC_CODE, mh)
+  const cid = new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, mh)
 
   return { cid, binary }
 }
@@ -92,7 +88,7 @@ function decodeInit (multiformats) {
     }
     const witnessHash = multiformats.multihash.encode(buf.slice(0, 32), HASH_ALG)
     const nonce = buf.slice(32)
-    const witnessMerkleRoot = new multiformats.CID(1, CODEC_CODE, witnessHash)
+    const witnessMerkleRoot = new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, witnessHash)
     return { witnessMerkleRoot, nonce }
   }
 }
@@ -101,10 +97,10 @@ module.exports = function (multiformats) {
   return {
     encode: encodeInit(multiformats),
     decode: decodeInit(multiformats),
-    name: CODEC,
-    code: CODEC_CODE
+    name: CODEC_WITNESS_COMMITMENT,
+    code: CODEC_WITNESS_COMMITMENT_CODE
   }
 }
 module.exports.encodeWitnessCommitment = encodeWitnessCommitment
-module.exports.CODEC = CODEC
-module.exports.CODEC_CODE = CODEC_CODE
+module.exports.CODEC = CODEC_WITNESS_COMMITMENT
+module.exports.CODEC_CODE = CODEC_WITNESS_COMMITMENT_CODE

@@ -1,9 +1,7 @@
 const { Buffer } = require('buffer')
 const { BitcoinTransaction, fromHashHex, merkle } = require('bitcoin-block')
-const HASH_ALG = require('./dbl-sha2-256').name
 const dblSha2256 = require('./dbl-sha2-256').encode
-const CODEC = 'bitcoin-tx'
-const CODEC_CODE = 0xb1
+const { HASH_ALG, CODEC_TX, CODEC_TX_CODE, CODEC_WITNESS_COMMITMENT_CODE } = require('./constants')
 const NULL_HASH = Buffer.alloc(32)
 
 function _encode (obj, arg) {
@@ -45,7 +43,7 @@ async function * _encodeAll (multiformats, deserialized, arg) {
     const binary = _encode(transaction, arg)
     const hash = dblSha2256(binary)
     const mh = await multiformats.multihash.encode(hash, HASH_ALG)
-    const cid = new multiformats.CID(1, CODEC_CODE, mh)
+    const cid = new multiformats.CID(1, CODEC_TX_CODE, mh)
     yield { cid, binary } // base tx
     hashes.push(hash)
   }
@@ -53,7 +51,7 @@ async function * _encodeAll (multiformats, deserialized, arg) {
   for (const { hash, data } of merkle(hashes)) {
     if (data) {
       const mh = await multiformats.multihash.encode(hash, HASH_ALG)
-      const cid = new multiformats.CID(1, CODEC_CODE, mh)
+      const cid = new multiformats.CID(1, CODEC_TX_CODE, mh)
       yield { cid, binary: Buffer.concat(data) } // tx merkle
     }
   }
@@ -82,17 +80,25 @@ function decodeInit (multiformats) {
       }
       const leftMh = left ? multiformats.multihash.encode(left, HASH_ALG) : null
       const rightMh = multiformats.multihash.encode(right, HASH_ALG)
-      const leftCid = left ? new multiformats.CID(1, CODEC_CODE, leftMh) : null
-      const rightCid = new multiformats.CID(1, CODEC_CODE, rightMh)
+      const leftCid = left ? new multiformats.CID(1, CODEC_TX_CODE, leftMh) : null
+      const rightCid = new multiformats.CID(1, CODEC_TX_CODE, rightMh)
       return [leftCid, rightCid]
     }
 
     const tx = BitcoinTransaction.decode(buf)
     const deserialized = tx.toPorcelain()
+    if (tx.isCoinbase()) {
+      const witnessCommitment = tx.getWitnessCommitment()
+      if (witnessCommitment) {
+        const witnessCommitmentMh = multiformats.multihash.encode(witnessCommitment, HASH_ALG)
+        const witnessCommitmentCid = new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, witnessCommitmentMh)
+        deserialized.witnessCommitment = witnessCommitmentCid
+      }
+    }
     for (const vin of deserialized.vin) {
       if (typeof vin.txid === 'string' && /^[0-9a-f]{64}$/.test(vin.txid)) {
         const txidMh = await multiformats.multihash.encode(fromHashHex(vin.txid), HASH_ALG)
-        vin.tx = new multiformats.CID(1, CODEC_CODE, txidMh)
+        vin.tx = new multiformats.CID(1, CODEC_TX_CODE, txidMh)
       }
     }
 
@@ -105,12 +111,12 @@ module.exports = function (multiformats) {
     encode,
     encodeNoWitness,
     decode: decodeInit(multiformats),
-    name: CODEC,
-    code: CODEC_CODE
+    name: CODEC_TX,
+    code: CODEC_TX_CODE
   }
 }
 module.exports.encodeAll = encodeAll
 module.exports.encodeAllNoWitness = encodeAllNoWitness
 module.exports.encodeNoWitness = encodeNoWitness
-module.exports.CODEC = CODEC
-module.exports.CODEC_CODE = CODEC_CODE
+module.exports.CODEC = CODEC_TX
+module.exports.CODEC_CODE = CODEC_TX_CODE
