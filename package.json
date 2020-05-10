@@ -14,7 +14,7 @@
   },
   "keywords": [
     "IPFS",
-		"IPLD"
+    "IPLD"
   ],
   "license": "MIT",
   "bugs": {
@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/ipld/js-ipld-bitcoin#readme",
   "dependencies": {
-    "bitcoin-block": "^1.1.0",
+    "bitcoin-block": "^1.2.0",
     "buffer": "^5.6.0",
     "multiformats": "github:mikeal/js-multiformats"
   },
