@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 const test = it
+const { Buffer } = require('buffer')
 const { assert } = require('chai')
 const multiformats = require('multiformats')()
 const base32 = require('multiformats/bases/base32')

@@ -2,8 +2,8 @@
   "name": "ipld-bitcoin",
   "version": "0.3.1",
   "description": "JavaScript implementation of Bitcoin IPLD formats",
-  "leadMaintainer": "Volker Mische <volker.mische@gmail.com>",
-  "main": "src/index.js",
+  "leadMaintainer": "Rod Vagg <rod@vagg.org>",
+  "main": "src/bitcoin.js",
   "scripts": {
     "test": "mocha test/test.js",
     "pretest": "standard"
@@ -13,7 +13,8 @@
     "url": "git+https://github.com/ipld/js-ipld-bitcoin.git"
   },
   "keywords": [
-    "IPFS"
+    "IPFS",
+		"IPLD"
   ],
   "license": "MIT",
   "bugs": {
@@ -23,11 +24,7 @@
   "dependencies": {
     "bitcoin-block": "^1.1.0",
     "buffer": "^5.6.0",
-    "cids": "~0.8.0",
-    "multicodec": "^1.0.0",
-    "multiformats": "github:mikeal/js-multiformats",
-    "multihashes": "~0.4.14",
-    "multihashing-async": "~0.8.0"
+    "multiformats": "github:mikeal/js-multiformats"
   },
   "devDependencies": {
     "chai": "^4.2.0",
