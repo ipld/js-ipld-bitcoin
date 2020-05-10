@@ -5,7 +5,7 @@
   "leadMaintainer": "Rod Vagg <rod@vagg.org>",
   "main": "src/bitcoin.js",
   "scripts": {
-    "test": "mocha test/test.js",
+    "test": "mocha test/test-*.js",
     "pretest": "standard"
   },
   "repository": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "bitcoin-block": "^1.2.0",
     "buffer": "^5.6.0",
-    "multiformats": "github:mikeal/js-multiformats"
+    "multiformats": "github:multiformats/js-multiformats"
   },
   "devDependencies": {
     "chai": "^4.2.0",
