@@ -1,6 +1,6 @@
 const { Buffer } = require('buffer')
 const base32 = require('multiformats/bases/base32')
-const bitcoin = require('../src/bitcoin')
+const bitcoin = require('../')
 const { fromHashHex } = require('bitcoin-block')
 const fixtures = require('./fixtures')
 
@@ -22,10 +22,15 @@ function witnessCommitmentHashToCid (multiformats, hash) {
   return new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, Buffer.from(`${MULTIHASH_DBLSHA2256_LEAD}${hash}`, 'hex'))
 }
 
-function blockDataToHeader (data) {
-  const header = Object.assign({}, data)
+function cleanBlock (block) {
+  block = Object.assign({}, block)
   // chain-context data that can't be derived
-  'confirmations chainwork height mediantime nextblockhash'.split(' ').forEach((p) => delete header[p])
+  'confirmations chainwork height mediantime nextblockhash'.split(' ').forEach((p) => delete block[p])
+  return block
+}
+
+function blockDataToHeader (block) {
+  const header = cleanBlock(block)
   // data that can't be derived without transactions
   'tx nTx size strippedsize weight'.split(' ').forEach((p) => delete header[p])
   return header
@@ -75,6 +80,10 @@ function findWitnessCommitment (block) {
   }
 }
 
+function toHex (d) {
+  return d.reduce((hex, byte) => hex + byte.toString(16).padStart(2, '0'), '')
+}
+
 module.exports = {
   setupMultiformats,
   txHashToCid,
@@ -82,5 +91,7 @@ module.exports = {
   setupBlocks,
   findWitnessCommitment,
   fixtureNames: fixtures.names,
-  CODEC_TX_CODE
+  cleanBlock,
+  CODEC_TX_CODE,
+  toHex
 }

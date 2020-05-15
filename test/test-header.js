@@ -3,7 +3,7 @@
 const test = it
 const { assert } = require('chai')
 const multiformats = require('multiformats')()
-const { setupMultiformats, setupBlocks, fixtureNames } = require('./util')
+const { setupMultiformats, setupBlocks, fixtureNames, toHex } = require('./util')
 
 describe('header', () => {
   let blocks
@@ -27,7 +27,7 @@ describe('header', () => {
 
       test('encode', async () => {
         const encoded = await multiformats.encode(blocks[name].expectedHeader, 'bitcoin-block')
-        assert.strictEqual(encoded.toString('hex'), blocks[name].raw.slice(0, 80).toString('hex'), 'raw bytes match')
+        assert.strictEqual(toHex(encoded), toHex(blocks[name].raw.slice(0, 80)), 'raw bytes match')
       })
     })
   }

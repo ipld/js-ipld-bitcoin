@@ -8,15 +8,17 @@ function _encode (obj, arg) {
   if (typeof obj !== 'object') {
     throw new TypeError('Can only encode() an object')
   }
-  return BitcoinTransaction.fromPorcelain(obj).encode(arg)
+  const bitcoinTransaction = BitcoinTransaction.fromPorcelain(obj)
+  const binary = bitcoinTransaction.encode(arg)
+  return { bitcoinTransaction, binary }
 }
 
 function encode (obj) {
-  return _encode(obj)
+  return _encode(obj).binary
 }
 
 function encodeNoWitness (obj) {
-  return _encode(obj, BitcoinTransaction.HASH_NO_WITNESS)
+  return _encode(obj, BitcoinTransaction.HASH_NO_WITNESS).binary
 }
 
 async function * _encodeAll (multiformats, deserialized, arg) {
@@ -31,20 +33,19 @@ async function * _encodeAll (multiformats, deserialized, arg) {
   }
 
   const hashes = []
-  for (let i = 0; i < deserialized.tx.length; i++) {
-    if (i === 0 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
+  for (let ii = 0; ii < deserialized.tx.length; ii++) {
+    if (ii === 0 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
       // for full-witness merkles, the coinbase is replaced with a 0x00.00 hash in the first
       // position, we don't give this a CID+Binary designation but pretend it's not there on
       // decode
       hashes.push(Buffer.alloc(32))
       continue
     }
-    const transaction = deserialized.tx[i]
-    const binary = _encode(transaction, arg)
+    const { transaction, binary } = _encode(deserialized.tx[ii], arg)
     const hash = dblSha2256(binary)
     const mh = await multiformats.multihash.encode(hash, HASH_ALG)
     const cid = new multiformats.CID(1, CODEC_TX_CODE, mh)
-    yield { cid, binary } // base tx
+    yield { cid, binary, transaction } // base tx
     hashes.push(hash)
   }
 
@@ -66,10 +67,11 @@ function encodeAllNoWitness (multiformats, obj) {
 }
 
 function decodeInit (multiformats) {
-  return async function decode (buf) {
-    if (!Buffer.isBuffer(buf)) {
+  return function decode (buf) {
+    if (!(buf instanceof Uint8Array && buf.constructor.name === 'Uint8Array')) {
       throw new TypeError('Can only decode() a Buffer or Uint8Array')
     }
+    buf = Buffer.from(buf)
 
     if (buf.length === 64) {
       // is some kind of merkle node
@@ -97,7 +99,7 @@ function decodeInit (multiformats) {
     }
     for (const vin of deserialized.vin) {
       if (typeof vin.txid === 'string' && /^[0-9a-f]{64}$/.test(vin.txid)) {
-        const txidMh = await multiformats.multihash.encode(fromHashHex(vin.txid), HASH_ALG)
+        const txidMh = multiformats.multihash.encode(fromHashHex(vin.txid), HASH_ALG)
         vin.tx = new multiformats.CID(1, CODEC_TX_CODE, txidMh)
       }
     }

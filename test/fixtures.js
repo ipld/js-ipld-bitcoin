@@ -27,7 +27,7 @@ const meta = {
   },
   segwit2: {
     hash: '000000000000000000ac2a49162ec7c457212134e46ab24daa63e0fae949bd90',
-    cid: 'gyacvrasc6ut2p24br2utnsnlsdiijbk7cmolqwjevkyaaaaaaaaaaaaaaa',
+    cid: 'bagyacvrasc6ut2p24br2utnsnlsdiijbk7cmolqwjevkyaaaaaaaaaaaaaaa',
     parentCid: 'bagyacvraslynm6bxjw5quictixjy6nn6pasbeid3xwvhcaaaaaaaaaaaaaaa',
     txCid: 'bagyqcvrathrvk65vedb5ixlow3xbr6j3gzs36tens5dsadnufex5xlgcpdbq',
     tx: require('./fixtures/segwit2.tx')
@@ -41,18 +41,23 @@ const meta = {
   }
 }
 
-async function loadFixture (name) {
-  const [data, rawHex] = await Promise.all(process.browser
-    ? [
-      (async () => (await import(`./fixtures/${name}.json`)).default)(),
-      (async () => (await import(`!!raw-loader!./fixtures/${name}.hex`)).default)()
-    ]
-    : [
-      (async () => JSON.parse(await fs.promises.readFile(path.join(__dirname, `fixtures/${name}.json`), 'utf8')))(),
-      fs.promises.readFile(path.join(__dirname, `fixtures/${name}.hex`), 'ascii')
-    ])
+const cache = {}
 
-  return { meta: meta[name], data, raw: Buffer.from(rawHex, 'hex') }
+async function loadFixture (name) {
+  if (!cache[name]) {
+    const [data, rawHex] = await Promise.all(process.browser
+      ? [
+        (async () => (await import(`./fixtures/${name}.json`)).default)(),
+        (async () => (await import(`!!raw-loader!./fixtures/${name}.hex`)).default)()
+      ]
+      : [
+        (async () => JSON.parse(await fs.promises.readFile(path.join(__dirname, `fixtures/${name}.json`), 'utf8')))(),
+        fs.promises.readFile(path.join(__dirname, `fixtures/${name}.hex`), 'ascii')
+      ])
+
+    cache[name] = { meta: meta[name], data, raw: Buffer.from(rawHex, 'hex') }
+  }
+  return cache[name]
 }
 
 module.exports = loadFixture

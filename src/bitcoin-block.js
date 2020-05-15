@@ -12,18 +12,19 @@ function encodeInit (multiformats) {
 }
 
 function decodeInit (multiformats) {
-  return async function decode (buf) {
-    if (!Buffer.isBuffer(buf)) {
+  return function decode (buf) {
+    if (!(buf instanceof Uint8Array && buf.constructor.name === 'Uint8Array')) {
       throw new TypeError('Can only decode() a Buffer or Uint8Array')
     }
+    buf = Buffer.from(buf)
 
     const deserialized = BitcoinBlock.decodeHeaderOnly(buf).toPorcelain()
 
     // insert links derived from native hash hex strings
-    const parentHash = await multiformats.multihash.encode(
+    const parentHash = multiformats.multihash.encode(
       fromHashHex(deserialized.previousblockhash), HASH_ALG)
     deserialized.parent = new multiformats.CID(1, CODEC_BLOCK_CODE, parentHash)
-    const txHash = await multiformats.multihash.encode(
+    const txHash = multiformats.multihash.encode(
       fromHashHex(deserialized.merkleroot), HASH_ALG)
     deserialized.tx = new multiformats.CID(1, CODEC_TX_CODE, txHash)
 

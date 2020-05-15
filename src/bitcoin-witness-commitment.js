@@ -80,15 +80,16 @@ function encodeInit (multiformats) {
 
 function decodeInit (multiformats) {
   return function decode (buf) {
-    if (!Buffer.isBuffer(buf)) {
+    if (!(buf instanceof Uint8Array && buf.constructor.name === 'Uint8Array')) {
       throw new TypeError('Can only decode() a Buffer or Uint8Array')
     }
+    buf = Buffer.from(buf)
     if (buf.length !== 64) {
       throw new TypeError('bitcoin-witness-commitment must be a 64-byte Buffer')
     }
     const witnessHash = multiformats.multihash.encode(buf.slice(0, 32), HASH_ALG)
     const nonce = buf.slice(32)
-    const witnessMerkleRoot = new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, witnessHash)
+    const witnessMerkleRoot = new multiformats.CID(1, CODEC_TX_CODE, witnessHash)
     return { witnessMerkleRoot, nonce }
   }
 }

@@ -11,7 +11,8 @@ const {
   setupBlocks,
   txHashToCid,
   findWitnessCommitment,
-  fixtureNames
+  fixtureNames,
+  toHex
 } = require('./util')
 
 describe('merkle', () => {
@@ -87,9 +88,9 @@ describe('merkle', () => {
           assert.strictEqual(decoded[0], null, 'decoded form coinbase hash left element is correct')
           lastLeft = Buffer.alloc(32)
         } else {
-          assert.deepEqual(decoded[0], txHashToCid(multiformats, left.toString('hex')), 'decoded form left CID is correct')
+          assert.deepEqual(decoded[0], txHashToCid(multiformats, toHex(left)), 'decoded form left CID is correct')
         }
-        assert.deepEqual(decoded[1], txHashToCid(multiformats, right.toString('hex')), 'decoded form right CID is correct')
+        assert.deepEqual(decoded[1], txHashToCid(multiformats, toHex(right)), 'decoded form right CID is correct')
         assert.deepEqual(left, lastLeft, `left element in layer ${layer} node is CID in layer ${layer - 1}`)
         // debug: process.stdout.write(`${thisLayer.length} <> ${thisLayer.length * 2} : ${lastLayer.length} : ${thisLayerLength} `)
         // debug: process.stdout.write(`${left.slice(0, 6).toString('hex')} <> ${lastLayer[thisLayer.length * 2].slice(0, 6).toString('hex')} `)
@@ -161,11 +162,11 @@ describe('merkle', () => {
         const { cid, binary } =
           await bitcoinWitnessCommitment.encodeWitnessCommitment(multiformats, blocks[name].data, root)
         const hash = multiformats.multihash.decode(cid.multihash).digest
-        assert.strictEqual(hash.toString('hex'), expectedWitnessCommitment.toString('hex'), 'got expected witness commitment')
+        assert.strictEqual(toHex(hash), toHex(expectedWitnessCommitment), 'got expected witness commitment')
         assert.strictEqual(binary.length, 64, 'correct block length')
         // this isn't true for all blocks, just most of them, Bitcoin Core does NULL nonces but it's not a strict
         // requirement so some blocks have novel hashes
-        assert.deepEqual(binary.slice(32).toString('hex'), ''.padStart(64, '0'), 'got expected NULL nonce')
+        assert.deepEqual(toHex(binary.slice(32)), ''.padStart(64, '0'), 'got expected NULL nonce')
 
         const decoded = multiformats.decode(binary, 'bitcoin-witness-commitment')
         assert.strictEqual(typeof decoded, 'object', 'correct decoded witness commitment form')
