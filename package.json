@@ -29,7 +29,7 @@
   "devDependencies": {
     "@ipld/dag-cbor": "github:ipld/js-dag-cbor#multiformats",
     "chai": "^4.2.0",
-    "datastore-car": "^1.1.4",
+    "datastore-car": "github:ipld/js-datastore-car#rvagg/multiformats",
     "mocha": "^7.1.2",
     "standard": "^14.3.3"
   },
