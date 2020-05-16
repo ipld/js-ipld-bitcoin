@@ -11,6 +11,13 @@ const path = require('path')
 //   3. start byte in block
 //   4. end byte in block
 const meta = {
+  genesis: {
+    hash: '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f',
+    cid: 'bagyacvran7riycvw6gzxfqngujdk4y7xj6jr5a3f4fnarhdi2ymqaaaaaaaa',
+    parentCid: null,
+    txCid: 'bagyqcvrahor637l2pmjle6whfq7go5upmf74qg6drcffcmr2t64kusy6lzfa',
+    tx: require('./fixtures/genesis.tx')
+  },
   block: {
     hash: '0000000000000002909eabb1da3710351faf452374946a0dfdb247d491c6c23e',
     cid: 'bagyacvrah3bmneoui6zp2dlksr2cgrnpd42ran62wgvz5eacaaaaaaaaaaaa',

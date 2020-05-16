@@ -131,13 +131,13 @@ describe('merkle', () => {
         expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
         if (!expectedWitnessCommitment) {
           // this isn't done inside a test() but it's a sanity check on our fixture data, not the test data
-          assert.strictEqual(name, 'block', 'non-segwit block shouldn\'t have witness commitment, all others should')
+          assert(['block', 'genesis'].includes(name), 'non-segwit block shouldn\'t have witness commitment, all others should')
         }
       })
 
       test('encode transactions into no-witness merkle', async () => {
         const { witnessCommitment } = await verifyMerkle(name, false)
-        if (name === 'block') {
+        if (name === 'block' || name === 'genesis') {
           assert.isUndefined(witnessCommitment, 'no witness commitment for non-witness merkle')
         } else {
           assert(multiformats.CID.isCID(witnessCommitment), 'witness commitment exists and is a CID')
@@ -154,7 +154,7 @@ describe('merkle', () => {
         // witness commitment
         assert.strictEqual(witnessCommitment, null, 'shouldn\'t find a witness commitment in the full-witness merkle')
 
-        if (name === 'block') {
+        if (name === 'block' || name === 'genesis') {
           // nothing else to test here
           return
         }

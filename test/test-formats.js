@@ -104,7 +104,7 @@ describe('formats', () => {
         const headerExpected = Object.assign({}, expected, { tx: null })
         assert.deepEqual(headerActual, headerExpected)
 
-        if (name === 'block') {
+        if (name === 'block' || name === 'genesis') {
           assert.strictEqual(reads, blockCount)
         } else {
           // something less because we don't need to read the non-segwit transactions and maybe parts of the tx merkle

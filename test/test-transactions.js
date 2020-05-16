@@ -38,7 +38,7 @@ describe('transactions', () => {
       test('decode', async () => {
         return forEachTx(async ({ index, txRaw, txExpected }) => {
           const decoded = await multiformats.decode(txRaw, 'bitcoin-tx')
-          if (index === 0 && name !== 'block') { // coinbase for segwit block
+          if (index === 0 && !(name === 'block' || name === 'genesis')) { // coinbase for segwit block
             // the coinbase for segwit blocks is decorated with a CID version of the witness commitment
             const expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
             txExpected.witnessCommitment = witnessCommitmentHashToCid(multiformats, toHex(expectedWitnessCommitment))

@@ -46,7 +46,7 @@ async function setupBlocks (multiformats) {
   for (const name of fixtures.names) {
     blocks[name] = await fixtures(name)
     blocks[name].expectedHeader = blockDataToHeader(blocks[name].data)
-    blocks[name].expectedHeader.parent = new multiformats.CID(blocks[name].meta.parentCid)
+    blocks[name].expectedHeader.parent = blocks[name].meta.parentCid ? new multiformats.CID(blocks[name].meta.parentCid) : null
     blocks[name].expectedHeader.tx = new multiformats.CID(blocks[name].meta.txCid)
     if (blocks[name].data.tx[0].txid !== blocks[name].data.tx[0].hash) {
       // is segwit transaction, add default txinwitness, see

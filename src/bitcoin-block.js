@@ -21,9 +21,14 @@ function decodeInit (multiformats) {
     const deserialized = BitcoinBlock.decodeHeaderOnly(buf).toPorcelain()
 
     // insert links derived from native hash hex strings
-    const parentHash = multiformats.multihash.encode(
-      fromHashHex(deserialized.previousblockhash), HASH_ALG)
-    deserialized.parent = new multiformats.CID(1, CODEC_BLOCK_CODE, parentHash)
+    if (deserialized.previousblockhash) {
+      const parentHash = multiformats.multihash.encode(
+        fromHashHex(deserialized.previousblockhash), HASH_ALG)
+      deserialized.parent = new multiformats.CID(1, CODEC_BLOCK_CODE, parentHash)
+    } else {
+      // genesis
+      deserialized.parent = null
+    }
     const txHash = multiformats.multihash.encode(
       fromHashHex(deserialized.merkleroot), HASH_ALG)
     deserialized.tx = new multiformats.CID(1, CODEC_TX_CODE, txHash)
