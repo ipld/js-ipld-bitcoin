@@ -14,16 +14,17 @@ function serializeFullBitcoinBinary (obj) {
 }
 
 async function blockToCar (multiformats, carWriter, obj) {
-  let root = false
+  let root
   for await (const { cid, binary } of encodeAll(multiformats, obj)) {
     if (!root) {
-      root = true
+      root = cid
       await carWriter.setRoots(cid)
     }
     await carWriter.put(cid, binary)
   }
 
   await carWriter.close()
+  return root
 }
 
 module.exports = [

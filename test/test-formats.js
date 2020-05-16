@@ -60,7 +60,8 @@ describe('formats', () => {
         // write
         const outStream = fs.createWriteStream(`${name}.car`)
         const writeDs = await CarDatastore.writeStream(outStream)
-        await bitcoin.blockToCar(multiformats, writeDs, expected)
+        const rootCid = await bitcoin.blockToCar(multiformats, writeDs, expected)
+        assert.deepStrictEqual(rootCid.toString(), blockCid.toString())
 
         // read
 
@@ -92,7 +93,6 @@ describe('formats', () => {
 
         // perform the reassemble!
         const { deserialized: actual, binary } = await bitcoin.assemble(multiformats, loader, blockCid)
-        // console.log('read', reads, 'blocks, have', Object.keys(index).length, 'blocks')
 
         // test transactions separately and then header so any failures don't result in
         // chai diff lockups or are just too big to be useful
