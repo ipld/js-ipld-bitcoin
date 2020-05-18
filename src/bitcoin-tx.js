@@ -33,16 +33,6 @@ async function * _encodeAll (multiformats, deserialized, arg) {
     throw new TypeError('deserialized argument must be a Bitcoin block representation')
   }
 
-  /*
-  if (deserialized.tx.length === 1 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
-    // witness merkle with only a coinbase!
-    const hash = dblSha2256(NULL_HASH)
-    const mh = await multiformats.multihash.encode(hash, HASH_ALG)
-    const cid = new multiformats.CID(1, CODEC_TX_CODE, mh)
-    yield { cid, binary: Buffer.alloc(64) }
-  }
-  */
-
   const hashes = []
   for (let ii = 0; ii < deserialized.tx.length; ii++) {
     if (ii === 0 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
@@ -84,7 +74,27 @@ function decodeInit (multiformats) {
     }
     buf = Buffer.from(buf)
 
-    if (buf.length === 64) {
+    // we don't know whether we're dealing with a real transaciton or a binary merkle node,
+    // even if length==64. So we should _try_ to decode the tx to see if it might be one.
+    // But, in the witness merkle, the lowest, left-most, non-leaf node contains 32-bytes
+    // of leading zeros and this makes the bytes decodeable into transaction form
+    let tx
+    if (buf.length !== 64 || NULL_HASH.compare(buf, 0, 32) !== 0) {
+      try {
+        tx = BitcoinTransaction.decode(buf)
+        if (buf.length === 64 && tx.version === 0 && tx.vin.length === 0 && tx.vout.length === 0) {
+          // this is almost certainly not a transaction but a binary merkle node with enough leading
+          // zeros to fake it
+          tx = null
+        }
+      } catch (err) {
+        if (buf.length !== 64) {
+          throw err
+        }
+      }
+    }
+
+    if (!tx && buf.length === 64) {
       // is some kind of merkle node
       let left = buf.slice(0, 32)
       const right = buf.slice(32)
@@ -98,7 +108,6 @@ function decodeInit (multiformats) {
       return [leftCid, rightCid]
     }
 
-    const tx = BitcoinTransaction.decode(buf)
     const deserialized = tx.toPorcelain()
     if (tx.isCoinbase()) {
       const witnessCommitment = tx.getWitnessCommitment()
