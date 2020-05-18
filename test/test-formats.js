@@ -7,12 +7,35 @@ const multiformats = require('multiformats')()
 multiformats.add(require('@ipld/dag-cbor'))
 const CarDatastore = require('datastore-car')(multiformats)
 const fixtures = require('./fixtures')
-const { setupMultiformats, roundDifficulty, cleanBlock } = require('./util')
+const { setupMultiformats, setupBlocks, roundDifficulty, cleanBlock } = require('./util')
 const bitcoin = require('../')
 
 describe('formats', () => {
-  before(() => {
+  let blocks
+
+  before(async () => {
     setupMultiformats(multiformats)
+    blocks = await setupBlocks(multiformats)
+  })
+
+  describe('hash to CID utilities', () => {
+    test('blockHashToCID', () => {
+      for (const name of fixtures.names) {
+        let actual = bitcoin.blockHashToCID(multiformats, fixtures.meta[name].hash)
+        assert.deepEqual(actual.toString(), fixtures.meta[name].cid)
+        if (name !== 'genesis') {
+          actual = bitcoin.blockHashToCID(multiformats, blocks[name].data.previousblockhash)
+          assert.deepEqual(actual.toString(), fixtures.meta[name].parentCid)
+        }
+      }
+    })
+
+    test('txHashToCID', () => {
+      for (const name of fixtures.names) {
+        const actual = bitcoin.txHashToCID(multiformats, blocks[name].data.merkleroot)
+        assert.deepEqual(actual.toString(), fixtures.meta[name].txCid)
+      }
+    })
   })
 
   describe('convertBitcoinBinary', () => {

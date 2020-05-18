@@ -1,5 +1,6 @@
 const { Buffer } = require('buffer')
 const { BitcoinTransaction, fromHashHex, merkle } = require('bitcoin-block')
+const { toHex } = require('multiformats/bytes')
 const dblSha2256 = require('./dbl-sha2-256').encode
 const { HASH_ALG, CODEC_TX, CODEC_TX_CODE, CODEC_WITNESS_COMMITMENT_CODE } = require('./constants')
 const NULL_HASH = Buffer.alloc(32)
@@ -122,6 +123,14 @@ function decodeInit (multiformats) {
   }
 }
 
+function txHashToCID (multiformats, blockHash) {
+  if (typeof blockHash !== 'string') {
+    blockHash = toHex(blockHash)
+  }
+  const mh = multiformats.multihash.encode(fromHashHex(blockHash), HASH_ALG)
+  return new multiformats.CID(1, CODEC_TX_CODE, mh)
+}
+
 module.exports = function (multiformats) {
   return {
     encode,
@@ -134,5 +143,6 @@ module.exports = function (multiformats) {
 module.exports.encodeAll = encodeAll
 module.exports.encodeAllNoWitness = encodeAllNoWitness
 module.exports.encodeNoWitness = encodeNoWitness
+module.exports.txHashToCID = txHashToCID
 module.exports.CODEC = CODEC_TX
 module.exports.CODEC_CODE = CODEC_TX_CODE

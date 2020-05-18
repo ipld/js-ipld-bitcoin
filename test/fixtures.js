@@ -103,3 +103,4 @@ async function loadFixture (name) {
 
 module.exports = loadFixture
 module.exports.names = Object.keys(meta)
+module.exports.meta = meta

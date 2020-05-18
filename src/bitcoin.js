@@ -37,3 +37,5 @@ module.exports.deserializeFullBitcoinBinary = deserializeFullBitcoinBinary
 module.exports.serializeFullBitcoinBinary = serializeFullBitcoinBinary
 module.exports.blockToCar = blockToCar
 module.exports.assemble = assemble
+module.exports.blockHashToCID = block.blockHashToCID
+module.exports.txHashToCID = tx.txHashToCID

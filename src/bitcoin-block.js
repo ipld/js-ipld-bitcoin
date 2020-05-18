@@ -1,5 +1,6 @@
 const { Buffer } = require('buffer')
 const { BitcoinBlock, fromHashHex } = require('bitcoin-block')
+const { toHex } = require('multiformats/bytes')
 const { HASH_ALG, CODEC_BLOCK, CODEC_BLOCK_CODE, CODEC_TX_CODE } = require('./constants')
 
 function encodeInit (multiformats) {
@@ -46,6 +47,15 @@ function init (multiformats) {
   }
 }
 
+function blockHashToCID (multiformats, blockHash) {
+  if (typeof blockHash !== 'string') {
+    blockHash = toHex(blockHash)
+  }
+  const mh = multiformats.multihash.encode(fromHashHex(blockHash), HASH_ALG)
+  return new multiformats.CID(1, CODEC_BLOCK_CODE, mh)
+}
+
 module.exports = init
+module.exports.blockHashToCID = blockHashToCID
 module.exports.CODEC = CODEC_BLOCK
 module.exports.CODEC_CODE = CODEC_BLOCK_CODE
