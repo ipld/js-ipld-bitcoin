@@ -3,7 +3,7 @@
 const test = it
 const { assert } = require('chai')
 const multiformats = require('multiformats')()
-const { setupMultiformats, setupBlocks, fixtureNames, toHex } = require('./util')
+const { setupMultiformats, setupBlocks, fixtureNames, toHex, roundDifficulty } = require('./util')
 
 describe('header', () => {
   let blocks
@@ -22,7 +22,7 @@ describe('header', () => {
     describe(`block "${name}"`, () => {
       test('decode full raw', async () => {
         const decoded = await multiformats.decode(blocks[name].raw, 'bitcoin-block')
-        assert.deepEqual(decoded, blocks[name].expectedHeader, 'decoded header correctly')
+        assert.deepEqual(roundDifficulty(decoded), roundDifficulty(blocks[name].expectedHeader), 'decoded header correctly')
       })
 
       test('encode', async () => {

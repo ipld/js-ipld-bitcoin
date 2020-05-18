@@ -2,6 +2,7 @@ const { Buffer } = require('buffer')
 const { BitcoinTransaction } = require('bitcoin-block')
 const dblSha2256 = require('./dbl-sha2-256').encode
 const { HASH_ALG, CODEC_TX, CODEC_TX_CODE, CODEC_WITNESS_COMMITMENT, CODEC_WITNESS_COMMITMENT_CODE } = require('./constants')
+const NULL_HASH = Buffer.alloc(32)
 
 /*
  * type BitcoinWitnessCommitment struct {
@@ -22,12 +23,21 @@ async function encodeWitnessCommitment (multiformats, deserialized, witnessMerkl
     throw new TypeError('deserialized argument must be a Bitcoin block representation')
   }
 
-  if (!Buffer.isBuffer(witnessMerkleRoot) && !multiformats.CID.isCID(witnessMerkleRoot)) {
+  if (witnessMerkleRoot !== null && !Buffer.isBuffer(witnessMerkleRoot) && !multiformats.CID.isCID(witnessMerkleRoot)) {
     throw new TypeError('witnessMerkleRoot must be a Buffer or CID')
   }
 
-  const merkleRootHash = Buffer.isBuffer(witnessMerkleRoot) ? witnessMerkleRoot
-    : multiformats.multihash.decode(witnessMerkleRoot.multihash).digest
+  let merkleRootHash
+  if (witnessMerkleRoot === null) {
+    // block has single tx, the coinbase, and it gets a NULL in the merkle, see bitcoin-tx for
+    // why this is missing and explicitly `null`
+    merkleRootHash = NULL_HASH
+  } else if (Buffer.isBuffer(witnessMerkleRoot)) {
+    merkleRootHash = witnessMerkleRoot
+  } else {
+    // CID
+    merkleRootHash = multiformats.multihash.decode(witnessMerkleRoot.multihash).digest
+  }
 
   const coinbase = BitcoinTransaction.fromPorcelain(deserialized.tx[0])
 
@@ -87,9 +97,14 @@ function decodeInit (multiformats) {
     if (buf.length !== 64) {
       throw new TypeError('bitcoin-witness-commitment must be a 64-byte Buffer')
     }
-    const witnessHash = multiformats.multihash.encode(buf.slice(0, 32), HASH_ALG)
+    const witnessHash = buf.slice(0, 32)
     const nonce = buf.slice(32)
-    const witnessMerkleRoot = new multiformats.CID(1, CODEC_TX_CODE, witnessHash)
+
+    let witnessMerkleRoot = null
+    if (!NULL_HASH.equals(Buffer.from(witnessHash))) {
+      const witnessMHash = multiformats.multihash.encode(witnessHash, HASH_ALG)
+      witnessMerkleRoot = new multiformats.CID(1, CODEC_TX_CODE, witnessMHash)
+    }
     return { witnessMerkleRoot, nonce }
   }
 }

@@ -7,7 +7,7 @@ const multiformats = require('multiformats')()
 multiformats.add(require('@ipld/dag-cbor'))
 const CarDatastore = require('datastore-car')(multiformats)
 const fixtures = require('./fixtures')
-const { setupMultiformats, cleanBlock } = require('./util')
+const { setupMultiformats, roundDifficulty, cleanBlock } = require('./util')
 const bitcoin = require('../')
 
 describe('formats', () => {
@@ -19,9 +19,10 @@ describe('formats', () => {
     for (const name of fixtures.names) {
       test(name, async () => {
         let { data: expected, raw } = await fixtures(name)
-        expected = cleanBlock(expected)
+        expected = roundDifficulty(cleanBlock(expected))
 
-        const actual = bitcoin.deserializeFullBitcoinBinary(raw)
+        let actual = bitcoin.deserializeFullBitcoinBinary(raw)
+        actual = roundDifficulty(actual)
 
         // test transactions separately and then header so any failures don't result in
         // chai diff lockups or are just too big to be useful
@@ -48,13 +49,13 @@ describe('formats', () => {
   })
 
   describe('full block car file round-trip', function () {
-    this.timeout(5000)
+    this.timeout(10000)
 
     for (const name of fixtures.names) {
       test(name, async () => {
         let { data: expected, meta, raw } = await fixtures(name)
 
-        expected = cleanBlock(expected)
+        expected = roundDifficulty(cleanBlock(expected))
         const blockCid = new multiformats.CID(meta.cid)
 
         // write
@@ -81,18 +82,21 @@ describe('formats', () => {
         // make a loder that can read blocks from the car
         const fd = await fs.promises.open(`${name}.car`)
         let reads = 0
+        let failedReads = 0
         async function loader (cid) {
-          reads++
           const blockIndex = index[cid.toString()]
           if (!blockIndex) {
+            failedReads++
             throw new Error(`Block not found: [${cid.toString()}]`)
           }
+          reads++
           const block = await CarDatastore.readRaw(fd, blockIndex)
           return block.binary
         }
 
         // perform the reassemble!
-        const { deserialized: actual, binary } = await bitcoin.assemble(multiformats, loader, blockCid)
+        let { deserialized: actual, binary } = await bitcoin.assemble(multiformats, loader, blockCid)
+        actual = roundDifficulty(actual)
 
         // test transactions separately and then header so any failures don't result in
         // chai diff lockups or are just too big to be useful
@@ -104,11 +108,16 @@ describe('formats', () => {
         const headerExpected = Object.assign({}, expected, { tx: null })
         assert.deepEqual(headerActual, headerExpected)
 
-        if (name === 'block' || name === 'genesis') {
+        if (!meta.segwit || expected.tx.length === 1) { // tx===1 doesn't require second merkle traversal
           assert.strictEqual(reads, blockCount)
         } else {
           // something less because we don't need to read the non-segwit transactions and maybe parts of the tx merkle
           assert(reads < blockCount)
+        }
+        if (name === '450002') {
+          assert.strictEqual(failedReads, 1) // checking whether the witness commitment is real (it's not for 450002)
+        } else {
+          assert.strictEqual(failedReads, 0)
         }
 
         assert.strictEqual(binary.toString('hex'), raw.toString('hex'), 're-encoded full binary form matches')

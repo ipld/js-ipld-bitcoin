@@ -32,13 +32,23 @@ async function * _encodeAll (multiformats, deserialized, arg) {
     throw new TypeError('deserialized argument must be a Bitcoin block representation')
   }
 
+  /*
+  if (deserialized.tx.length === 1 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
+    // witness merkle with only a coinbase!
+    const hash = dblSha2256(NULL_HASH)
+    const mh = await multiformats.multihash.encode(hash, HASH_ALG)
+    const cid = new multiformats.CID(1, CODEC_TX_CODE, mh)
+    yield { cid, binary: Buffer.alloc(64) }
+  }
+  */
+
   const hashes = []
   for (let ii = 0; ii < deserialized.tx.length; ii++) {
     if (ii === 0 && arg !== BitcoinTransaction.HASH_NO_WITNESS) {
       // for full-witness merkles, the coinbase is replaced with a 0x00.00 hash in the first
       // position, we don't give this a CID+Binary designation but pretend it's not there on
       // decode
-      hashes.push(Buffer.alloc(32))
+      hashes.push(NULL_HASH)
       continue
     }
     const { transaction, binary } = _encode(deserialized.tx[ii], arg)
@@ -92,6 +102,10 @@ function decodeInit (multiformats) {
     if (tx.isCoinbase()) {
       const witnessCommitment = tx.getWitnessCommitment()
       if (witnessCommitment) {
+        // NOTE that this may not be correct, it's possible for a tx to appear to have a witness commitment
+        // but it's not. A 38 byte vout scriptPubKey can have the correct leading 6 bytes but not be a
+        // witness commitment and we can't discriminate at this point -- we can only do that by trying to
+        // load the witness commitment from the generated CID
         const witnessCommitmentMh = multiformats.multihash.encode(witnessCommitment, HASH_ALG)
         const witnessCommitmentCid = new multiformats.CID(1, CODEC_WITNESS_COMMITMENT_CODE, witnessCommitmentMh)
         deserialized.witnessCommitment = witnessCommitmentCid

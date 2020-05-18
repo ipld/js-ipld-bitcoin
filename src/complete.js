@@ -76,14 +76,20 @@ async function * encodeAll (multiformats, block) {
     }
   }
 
+  if (!lastCid) {
+    if (block.tx.length === 1) {
+      lastCid = null
+    } else {
+      throw new Error('Unexpected missing witnessMerkleRoot!')
+    }
+  }
+
   yield await encodeWitnessCommitment(multiformats, block, lastCid)
   // counts.blocks++
   // console.log(counts)
 }
 
 async function assemble (multiformats, loader, blockCid) {
-  const block = multiformats.decode(await loader(blockCid), 'bitcoin-block')
-
   const merkleCache = {}
   async function loadTx (txCid) {
     const txCidStr = txCid.toString()
@@ -95,9 +101,12 @@ async function assemble (multiformats, loader, blockCid) {
     return node
   }
 
+  const block = multiformats.decode(await loader(blockCid), 'bitcoin-block')
+  let merkleRootCid = block.tx
+
   const coinbase = await (async () => {
     // find the coinbase
-    let txCid = block.tx
+    let txCid = merkleRootCid
     let node
     while (true) {
       node = await loadTx(txCid)
@@ -125,16 +134,29 @@ async function assemble (multiformats, loader, blockCid) {
 
   const txs = []
 
-  let merkleRootCid = block.tx
   if (coinbase.witnessCommitment) {
-    const witnessCommitment = multiformats.decode(await loader(coinbase.witnessCommitment), 'bitcoin-witness-commitment')
-    // insert the nonce into the coinbase
-    coinbase.vin[0].txinwitness = [witnessCommitment.nonce.toString('hex')]
-    // nullify the hash so txid!==hash and BitcoinTransaction.fromPorcelain() will interpret it as a segwit
-    coinbase.hash = ''.padStart(64, '0')
-    // push it in as tx 0 since the witness merkle doesn't contain the coinbase
-    txs.push(coinbase)
-    merkleRootCid = witnessCommitment.witnessMerkleRoot
+    try {
+      const witnessCommitment = multiformats.decode(await loader(coinbase.witnessCommitment), 'bitcoin-witness-commitment')
+      // if we got here, the witness commitment was real (see notes in catch()), so it's safe to proceed with the assumption
+      // this is a proper segwit block
+
+      // insert the nonce into the coinbase
+      coinbase.vin[0].txinwitness = [witnessCommitment.nonce.toString('hex')]
+      // nullify the hash so txid!==hash and BitcoinTransaction.fromPorcelain() will interpret it as a segwit
+      coinbase.hash = ''.padStart(64, '0')
+
+      if (witnessCommitment.witnessMerkleRoot !== null) {
+        // push the coinbase in as tx 0 since the witness merkle doesn't contain the coinbase
+        txs.push(coinbase)
+        merkleRootCid = witnessCommitment.witnessMerkleRoot
+      } // else this is a special case of a segwit block with _only  a coinbase
+    } catch (err) {
+      // we've _likely_ hit tha special case of a coinbase appearing to have a witness commitment but it's not really
+      // a witness commitment, one of its vouts' scriptPubKey has the right length and leading 6 bytes so we can't
+      // distinguish it from a real witness commitment, so we back up and act as if there's no witness commitment
+    }
+    // else there's no witness merkle, should be only a coinbase in this block and it's all in the
+    // base tx merkle + the nonce from the witness commitment
   }
 
   for await (const tx of transactions(merkleRootCid)) {
@@ -153,22 +175,24 @@ async function assemble (multiformats, loader, blockCid) {
 module.exports.encodeAll = encodeAll
 module.exports.assemble = assemble
 
-async function run () {
-  const block = JSON.parse(require('fs').readFileSync(process.argv[2]))
-
-  const base32 = require('multiformats/bases/base32')
-  const multiformats = require('multiformats')()
-  multiformats.multibase.add(base32)
-  multiformats.add(require('./bitcoin'))
-  for await (const { cid, binary } of encodeAll(multiformats, block)) {
-    const { name } = multiformats.get(cid.code)
-    console.log(cid.toString(), name, binary.length)
-  }
-}
-
+/*
 if (require.main === module) {
+  async function run () {
+    const block = JSON.parse(require('fs').readFileSync(process.argv[2]))
+
+    const base32 = require('multiformats/bases/base32')
+    const multiformats = require('multiformats')()
+    multiformats.multibase.add(base32)
+    multiformats.add(require('./bitcoin'))
+    for await (const { cid, binary } of encodeAll(multiformats, block)) {
+      const { name } = multiformats.get(cid.code)
+      console.log(cid.toString(), name, binary.length)
+    }
+  }
+
   run().catch((e) => {
     console.log(e.stack)
     process.exit(1)
   })
 }
+*/

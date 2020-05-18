@@ -64,7 +64,14 @@ describe('merkle', () => {
           // not segwit, encoded block should be identical
           assert.strictEqual(binary.length, end - start, `got expected block length (${index})`)
           expectedCid = txHashToCid(multiformats, hashExpected)
-          assert.deepEqual(decoded, blocks[name].data.tx[index], 'transaction decoded back into expected form')
+          let actual = decoded
+          if (index === 0 && name === '450002') {
+            // special case block, faux witness commitment we have to contend with
+            assert(decoded.witnessCommitment && decoded.witnessCommitment.buffer && decoded.witnessCommitment.code) // is CID
+            actual = Object.assign({}, decoded)
+            delete actual.witnessCommitment
+          }
+          assert.deepEqual(actual, blocks[name].data.tx[index], 'transaction decoded back into expected form')
         } else {
           assert(binary.length < end - start - 2, `got approximate expected block length (${binary.length}, ${end - start}`)
           expectedCid = txHashToCid(multiformats, txidExpected)
@@ -131,13 +138,13 @@ describe('merkle', () => {
         expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)
         if (!expectedWitnessCommitment) {
           // this isn't done inside a test() but it's a sanity check on our fixture data, not the test data
-          assert(['block', 'genesis'].includes(name), 'non-segwit block shouldn\'t have witness commitment, all others should')
+          assert(!blocks[name].meta.segwit, 'non-segwit block shouldn\'t have witness commitment, all others should')
         }
       })
 
       test('encode transactions into no-witness merkle', async () => {
         const { witnessCommitment } = await verifyMerkle(name, false)
-        if (name === 'block' || name === 'genesis') {
+        if (!blocks[name].meta.segwit && name !== '450002') { // 450002 is the special-case faux segwit
           assert.isUndefined(witnessCommitment, 'no witness commitment for non-witness merkle')
         } else {
           assert(multiformats.CID.isCID(witnessCommitment), 'witness commitment exists and is a CID')
@@ -149,14 +156,23 @@ describe('merkle', () => {
       })
 
       test('encode transactions into segwit merkle & witness commitment', async () => {
-        const { root, witnessCommitment } = await verifyMerkle(name, true)
+        let { root, witnessCommitment } = await verifyMerkle(name, true)
 
         // witness commitment
         assert.strictEqual(witnessCommitment, null, 'shouldn\'t find a witness commitment in the full-witness merkle')
 
-        if (name === 'block' || name === 'genesis') {
+        if (!blocks[name].meta.segwit) {
           // nothing else to test here
           return
+        }
+
+        if (!root) {
+          if (blocks[name].data.tx.length === 1) {
+            // this is OK, make it null so encodeWitnessCommitment() handles it properly
+            root = null
+          } else {
+            assert.fail('Unexpected missing merkle root')
+          }
         }
 
         const { cid, binary } =
@@ -171,7 +187,12 @@ describe('merkle', () => {
         const decoded = multiformats.decode(binary, 'bitcoin-witness-commitment')
         assert.strictEqual(typeof decoded, 'object', 'correct decoded witness commitment form')
         assert(Buffer.isBuffer(decoded.nonce), 'correct decoded witness commitment form')
-        assert(multiformats.CID.isCID(decoded.witnessMerkleRoot), 'correct decoded witness commitment form')
+        if (blocks[name].data.tx.length === 1) {
+          // special case, only a coinbase, no useful merkle root
+          assert.strictEqual(decoded.witnessMerkleRoot, null)
+        } else {
+          assert(multiformats.CID.isCID(decoded.witnessMerkleRoot), 'correct decoded witness commitment form')
+        }
       })
     })
   }

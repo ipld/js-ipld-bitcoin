@@ -29,6 +29,13 @@ function cleanBlock (block) {
   return block
 }
 
+// round difficulty to 2 decimal places, it's a calculated value
+function roundDifficulty (obj) {
+  const ret = Object.assign({}, obj)
+  ret.difficulty = Math.round(obj.difficulty * 100) / 100
+  return ret
+}
+
 function blockDataToHeader (block) {
   const header = cleanBlock(block)
   // data that can't be derived without transactions
@@ -92,6 +99,7 @@ module.exports = {
   findWitnessCommitment,
   fixtureNames: fixtures.names,
   cleanBlock,
+  roundDifficulty,
   CODEC_TX_CODE,
   toHex
 }
