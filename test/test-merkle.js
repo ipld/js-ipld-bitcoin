@@ -132,7 +132,9 @@ describe('merkle', () => {
   }
 
   for (const name of fixtureNames) {
-    describe(`block "${name}"`, () => {
+    describe(`block "${name}"`, function () {
+      this.timeout(10000)
+
       let expectedWitnessCommitment
       before(() => {
         expectedWitnessCommitment = findWitnessCommitment(blocks[name].data)

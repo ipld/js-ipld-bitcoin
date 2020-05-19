@@ -24,7 +24,9 @@ describe('transactions', () => {
   })
 
   for (const name of fixtureNames) {
-    describe(`block "${name}"`, () => {
+    describe(`block "${name}"`, function () {
+      this.timeout(5000)
+
       // known metadata of the transaction, its hash, txid and byte location in the block
       async function forEachTx (txcb) {
         for (let index = 0; index < blocks[name].meta.tx.length; index++) {
