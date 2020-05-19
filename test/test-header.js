@@ -13,16 +13,21 @@ describe('header', () => {
     blocks = await setupBlocks(multiformats)
   })
 
-  test('decode block, header only', async () => {
-    const decoded = await multiformats.decode(blocks.block.raw.slice(0, 80), 'bitcoin-block')
-    assert.deepEqual(decoded, blocks.block.expectedHeader, 'decoded header correctly')
-  })
-
   for (const name of fixtureNames) {
     describe(`block "${name}"`, () => {
-      test('decode full raw', async () => {
-        const decoded = await multiformats.decode(blocks[name].raw, 'bitcoin-block')
+      test('decode block, header only', async () => {
+        const decoded = await multiformats.decode(blocks[name].raw.slice(0, 80), 'bitcoin-block')
         assert.deepEqual(roundDifficulty(decoded), roundDifficulty(blocks[name].expectedHeader), 'decoded header correctly')
+      })
+
+      test('don\'t allow decode full raw', async () => {
+        try {
+          await multiformats.decode(blocks[name].raw, 'bitcoin-block')
+        } catch (err) {
+          assert(/did not consume all available bytes as expected/.test(err.message))
+          return
+        }
+        assert.fail('should throw')
       })
 
       test('encode', async () => {

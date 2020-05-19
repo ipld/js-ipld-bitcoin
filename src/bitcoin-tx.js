@@ -81,8 +81,8 @@ function decodeInit (multiformats) {
     let tx
     if (buf.length !== 64 || NULL_HASH.compare(buf, 0, 32) !== 0) {
       try {
-        tx = BitcoinTransaction.decode(buf)
-        if (buf.length === 64 && tx.version === 0 && tx.vin.length === 0 && tx.vout.length === 0) {
+        tx = BitcoinTransaction.decode(buf, true)
+        if (buf.length === 64 && tx.vin.length === 0 && tx.vout.length === 0) {
           // this is almost certainly not a transaction but a binary merkle node with enough leading
           // zeros to fake it
           tx = null

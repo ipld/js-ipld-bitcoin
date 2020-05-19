@@ -32,6 +32,14 @@ const meta = {
     txCid: 'bagyqcvrahor637l2pmjle6whfq7go5upmf74qg6drcffcmr2t64kusy6lzfa',
     tx: require('./fixtures/genesis.tx')
   },
+  300096: {
+    segwit: false,
+    hash: '00000000000000006af82b3b4f3f00b11cc4ecd9fb75445c0a1238aee8093dd1',
+    cid: 'bagyacvra2e6qt2fohajauxceox55t3gedsyqap2phmv7q2qaaaaaaaaaaaaa',
+    parentCid: 'bagyacvratq5lon37bw4m3hcsks4bziemvxbqnhymurfho6aaaaaaaaaaaaaa',
+    txCid: 'bagyqcvra25ddbpncp4ld3jrhlwtbmkcpbhns2gqzpw772wvx3gnhanlqvcaa',
+    tx: require('./fixtures/300096.tx')
+  },
   384931: {
     segwit: false,
     hash: '00000000000000000a4bffdfd5ff5a60051116c07d30f9a590edb55b5ad03e1f',

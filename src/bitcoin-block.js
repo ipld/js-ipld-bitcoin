@@ -19,7 +19,7 @@ function decodeInit (multiformats) {
     }
     buf = Buffer.from(buf)
 
-    const deserialized = BitcoinBlock.decodeHeaderOnly(buf).toPorcelain()
+    const deserialized = BitcoinBlock.decodeHeaderOnly(buf, true).toPorcelain()
 
     // insert links derived from native hash hex strings
     if (deserialized.previousblockhash) {
