@@ -182,9 +182,13 @@ describe('merkle', () => {
         const hash = multiformats.multihash.decode(cid.multihash).digest
         assert.strictEqual(toHex(hash), toHex(expectedWitnessCommitment), 'got expected witness commitment')
         assert.strictEqual(binary.length, 64, 'correct block length')
-        // this isn't true for all blocks, just most of them, Bitcoin Core does NULL nonces but it's not a strict
-        // requirement so some blocks have novel hashes
-        assert.deepEqual(toHex(binary.slice(32)), ''.padStart(64, '0'), 'got expected NULL nonce')
+        // most blocks have a null nonce (all zeros), Bitcoin Core does NULL nonces but it's not a strict
+        // requirement so some blocks have novel bytes
+        let expectedNonce = ''.padStart(64, '0')
+        if (name === '525343') { // block with non null nonce
+          expectedNonce = '5b5032506f6f6c5d5b5032506f6f6c5d5b5032506f6f6c5d5b5032506f6f6c5d'
+        }
+        assert.deepEqual(toHex(binary.slice(32)), expectedNonce)
 
         const decoded = multiformats.decode(binary, 'bitcoin-witness-commitment')
         assert.strictEqual(typeof decoded, 'object', 'correct decoded witness commitment form')

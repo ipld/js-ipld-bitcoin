@@ -58,7 +58,11 @@ async function setupBlocks (multiformats) {
     if (blocks[name].data.tx[0].txid !== blocks[name].data.tx[0].hash) {
       // is segwit transaction, add default txinwitness, see
       // https://github.com/bitcoin/bitcoin/pull/18826 for why this is missing
-      blocks[name].data.tx[0].vin[0].txinwitness = [''.padStart(64, '0')]
+      if (name === '525343') { // block with non null nonce
+        blocks[name].data.tx[0].vin[0].txinwitness = ['5b5032506f6f6c5d5b5032506f6f6c5d5b5032506f6f6c5d5b5032506f6f6c5d']
+      } else {
+        blocks[name].data.tx[0].vin[0].txinwitness = [''.padStart(64, '0')]
+      }
     }
     for (const tx of blocks[name].data.tx) {
       // manually ammend expected to include vin links (CIDs) to previous transactions
