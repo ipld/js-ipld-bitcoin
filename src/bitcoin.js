@@ -2,7 +2,7 @@ const dblSha2256 = require('./dbl-sha2-256')
 const block = require('./bitcoin-block')
 const tx = require('./bitcoin-tx')
 const witnessCommitment = require('./bitcoin-witness-commitment')
-const { BitcoinBlock } = require('bitcoin-block')
+const { BitcoinBlock, toHashHex } = require('bitcoin-block')
 const { encodeAll, assemble } = require('./complete')
 
 function deserializeFullBitcoinBinary (binary) {
@@ -27,6 +27,14 @@ async function blockToCar (multiformats, carWriter, obj) {
   return root
 }
 
+function cidToHash (multiformats, cid) {
+  if (!multiformats.CID.isCID(cid)) {
+    cid = new multiformats.CID(cid)
+  }
+  const { digest } = multiformats.multihash.decode(cid.multihash)
+  return toHashHex(digest)
+}
+
 module.exports = [
   dblSha2256,
   block,
@@ -38,4 +46,5 @@ module.exports.serializeFullBitcoinBinary = serializeFullBitcoinBinary
 module.exports.blockToCar = blockToCar
 module.exports.assemble = assemble
 module.exports.blockHashToCID = block.blockHashToCID
+module.exports.cidToHash = cidToHash
 module.exports.txHashToCID = tx.txHashToCID

@@ -36,6 +36,22 @@ describe('formats', () => {
         assert.deepEqual(actual.toString(), fixtures.meta[name].txCid)
       }
     })
+
+    test('cidToHash', () => {
+      for (const name of fixtures.names) {
+        let actual = bitcoin.cidToHash(multiformats, fixtures.meta[name].cid)
+        assert.deepEqual(actual.toString(), fixtures.meta[name].hash)
+        if (name !== 'genesis') {
+          actual = bitcoin.cidToHash(multiformats, fixtures.meta[name].parentCid)
+          assert.deepEqual(actual.toString(), blocks[name].data.previousblockhash)
+        }
+      }
+
+      for (const name of fixtures.names) {
+        const actual = bitcoin.cidToHash(multiformats, fixtures.meta[name].txCid)
+        assert.deepEqual(actual.toString(), blocks[name].data.merkleroot)
+      }
+    })
   })
 
   describe('convertBitcoinBinary', () => {
