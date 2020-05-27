@@ -2,6 +2,8 @@
 
 **JavaScript Bitcoin data codec for IPLD**
 
+![CI](https://github.com/rvagg/js-bitcoin/workflows/CI/badge.svg)
+
 ## About
 
 This codec is intended to be used with **[multiformats](https://github.com/multiformats/js-multiformats)** and **[@ipld/block](https://github.com/ipld/js-block)**. It provides decode and encode functionality for the Bitcoin native format to and from IPLD.
