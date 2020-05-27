@@ -89,6 +89,19 @@ async function * encodeAll (multiformats, block) {
   // console.log(counts)
 }
 
+/**
+ * Given a CID for a `bitcoin-block` Bitcoin block header and an IPLD block loader that can retrieve Bitcoin IPLD blocks by CID, re-assemble a full Bitcoin block graph into both object and binary forms.
+ *
+ * The loader should be able to return the binary form for `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` CIDs.
+ *
+ * Note that there are approximately 4,000 Bitcoin block graphs pre-SegWit which have the appearance of SegWit blocks but are, in fact, not. These blocks will cause the loader to be called for `bitcoin-witness-commitment` CIDs that will not resolve. Such resolution should throw an `Error` but this will not be propagated, but rather be used as a signal that the block is not a SegWit block and the assembler should not proceed to load it as such.
+ *
+ * @param {object} a multiformats object with the Bitcoin multicodec and multihash installed
+ * @param {function} an IPLD block loader function that takes a CID argument and returns a `Buffer` or `Uint8Array` containing the binary block data for that CID
+ * @param {CID} a CID of type `bitcoin-block` pointing to the Bitcoin block header for the block to be assembled
+ * @returns {object} an object containing two properties, `deserialized` and `binary` where `deserialized` contains a full JavaScript instantiation of the Bitcoin block graph and `binary` contains a `Buffer` with the binary representation of the graph.
+ * @function
+ */
 async function assemble (multiformats, loader, blockCid) {
   const merkleCache = {}
   async function loadTx (txCid) {
@@ -174,25 +187,3 @@ async function assemble (multiformats, loader, blockCid) {
 
 module.exports.encodeAll = encodeAll
 module.exports.assemble = assemble
-
-/*
-if (require.main === module) {
-  async function run () {
-    const block = JSON.parse(require('fs').readFileSync(process.argv[2]))
-
-    const base32 = require('multiformats/bases/base32')
-    const multiformats = require('multiformats')()
-    multiformats.multibase.add(base32)
-    multiformats.add(require('./bitcoin'))
-    for await (const { cid, binary } of encodeAll(multiformats, block)) {
-      const { name } = multiformats.get(cid.code)
-      console.log(cid.toString(), name, binary.length)
-    }
-  }
-
-  run().catch((e) => {
-    console.log(e.stack)
-    process.exit(1)
-  })
-}
-*/

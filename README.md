@@ -1,87 +1,182 @@
 # IPLD for Bitcoin
 
-[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
-[![](https://img.shields.io/badge/project-IPLD-blue.svg?style=flat-square)](http://github.com/ipld/ipld)
-[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
-[![Travis CI](https://flat.badgen.net/travis/ipld/js-ipld-bitcoin)](https://travis-ci.com/ipld/js-ipld-bitcoin)
-[![Coverage](https://coveralls.io/repos/github/ipld/js-ipld-bitcoin/badge.svg?branch=master)](https://coveralls.io/github/ipld/js-ipld-bitcoin?branch=master)
-[![](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-[![](https://david-dm.org/ipld/js-ipld-bitcoin.svg?style=flat-square)](https://david-dm.org/ipld/js-ipld-bitcoin)
-[![](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/feross/standard) [![Greenkeeper badge](https://badges.greenkeeper.io/ipld/js-ipld-bitcoin.svg)](https://greenkeeper.io/)
-![](https://img.shields.io/badge/npm-%3E%3D3.0.0-orange.svg?style=flat-square)
-![](https://img.shields.io/badge/Node.js-%3E%3D6.0.0-orange.svg?style=flat-square)
+**JavaScript Bitcoin data codec for IPLD**
 
-> JavaScript implementation of the [IPLD format spec](https://github.com/ipld/interface-ipld-format) for Bitcoin blocks.
+## About
 
-## Lead Maintainer
+This codec is intended to be used with **[multiformats](https://github.com/multiformats/js-multiformats)** and **[@ipld/block](https://github.com/ipld/js-block)**. It provides decode and encode functionality for the Bitcoin native format to and from IPLD.
 
-[Volker Mische](https://github.com/vmx)
+The primary usage of this library is as a codec added to a `multiformats` object:
 
-## Table of Contents
-
-- [Install](#install)
-  - [npm](#npm)
-  - [Use in Node.js](#use-in-nodejs)
-  - [Use in a browser with browserify, webpack or any other bundler](#use-in-a-browser-with-browserify-webpack-or-any-other-bundler)
-  - [Use in a browser Using a script tag](#use-in-a-browser-using-a-script-tag)
-- [Usage](#usage)
-- [Contribute](#contribute)
-- [License](#license)
-
-## Install
-
-### npm
-
-```sh
-> npm install ipld-bitcoin
+```js
+const multiformats = require('multiformats')()
+multiformats.add(require('@ipld/bitcoin'))
 ```
 
-### Use in Node.js
+The following multicodecs are registered:
 
-```JavaScript
-const IpldBitcoin = require('ipld-bitcoin')
+* `bitcoin-block` / `0xb0`: The Bitcoin block header, commonly identified by "Bitcoin block identifiers" (hashes with leading zeros).
+* `bitcoin-tx` / `0xb1`: Bitcoin transactions _and_ nodes in a binary merkle tree, the tip of which is referenced by the Bitcoin block header.
+* `bitcoin-witness-commitment` / `0xb2`: The Bitcoin witness commitment that is used to reference transactions with intact witness data (a complication introduced by [SegWit](https://en.wikipedia.org/wiki/SegWit)).
+
+These multicodecs support `encode()` and `decode()` functionality through `multiformats`.
+
+The following multihash is registered:
+
+* `dbl-sha2-256` / `0x56`: A double SHA2-256 hash: `SHA2-256(SHA2-256(bytes))`, used natively across all Bitcoin blocks, forming block identifiers, transaction identifiers and hashes and binary merkle tree nodes.
+
+Utilities are also provided to convert between Bitcoin hash identifiers and CIDs and to convert to and from full Bitcoin raw block data to a full collection of IPLD blocks. Additional conversion functionality for bitcoin raw data and the `bitcoin-cli` JSON format is provided by the **[bitcoin-block](https://github.com/rvagg/js-bitcoin-block)** library.
+
+The previous incarnation of the Bitcoin codec for IPLD can be found at <https://github.com/ipld/js-ipld-bitcoin>.
+
+## Example
+
+```js
+const multiformats = require('multiformats/basics')
+multiformats.add(require('@ipld/bitcoin'))
+const CarDatastore = require('datastore-car')(multiformats)
+
+const carDs = await CarDatastore.readFileComplete('/path/to/bundle/of/blocks.car')
+const headerCid = ipldBitcoin.blockHashToCID(multiformats, hash)
+const header = multiformats.decode(await carDs.get(headerCid), 'bitcoin-block')
+
+// navigate the transaction binary merkle tree to the first transaction, the coinbase
+let txCid = header.tx
+let tx
+while (true) {
+	tx = multiformats.decode(await carDs.get(txCid), 'bitcoin-tx')
+	if (!Array.isArray(tx)) { // is not an inner merkle tree node
+		break
+	}
+	txCid = tx[0] // leftmost side of the tx binary merkle
+}
+
+// convert the scriptSig to UTF-8 and cross our fingers that there's something
+// interesting in there
+console.log(Buffer.from(tx.vin[0].coinbase, 'hex').toString('utf8'))
 ```
 
-### Use in a browser with browserify, webpack or any other bundler
+## API
 
-The code published to npm that gets loaded on require is in fact a ES5 transpiled version with the right shims added. This means that you can require it and use with your favourite bundler without having to adjust asset management process.
+### Contents
 
-```JavaScript
-var IpldBitcoin = require('ipld-bitcoin')
-```
+ * [`deserializeFullBitcoinBinary(a)`](#deserializeFullBitcoinBinary)
+ * [`serializeFullBitcoinBinary(a)`](#serializeFullBitcoinBinary)
+ * [`async blockToCar(a, an, a)`](#blockToCar)
+ * [`cidToHash(a, a)`](#cidToHash)
+ * [`async assemble(a, an, a)`](#assemble)
+ * [`blockHashToCID(multiformats)`](#blockHashToCID)
+ * [`txHashToCID(multiformats)`](#txHashToCID)
 
-### Use in a browser Using a script tag
+<a name="deserializeFullBitcoinBinary"></a>
+### `deserializeFullBitcoinBinary(a)`
 
-Loading this module through a script tag will make the `IpldBitcoint` obj available in the global namespace.
+Instantiate a full object form from a full Bitcoin block graph binary representation. This binary form is typically extracted from a Bitcoin network node, such as with the Bitcoin Core `bitcoin-cli` `getblock <identifier> 0` command (which outputs hexadecimal form and therefore needs to be decoded prior to handing to this function). This full binary form can also be obtained from the utility [`assemble`](#assemble) function which can construct the full graph form of a Bitcoin block from the full IPLD block graph.
 
-```html
-<script src="https://unpkg.com/ipld-bitcoin/dist/index.min.js"></script>
-<!-- OR -->
-<script src="https://unpkg.com/ipld-bitcoin/dist/index.js"></script>
-```
+The object returned, if passed through `JSON.stringify()` should be identical to the JSON form provided by the Bitcoin Core `bitcoin-cli` `getblock <identifier> 2` command (minus some chain-context elements that are not possible to derive without the full blockchain).
 
-## Usage
+**Parameters:**
 
-As this is is an implementation of the [IPLD format spec](https://github.com/ipld/interface-ipld-format), it should be used through the [IPLD resolver](https://github.com/ipld/js-ipld-resolver). See the IPLD format spec for details about the API.
+* **`a`** _(`Uint8Array|Buffer`)_: binary form of a Bitcoin block graph
 
-Though it can also be used as a standalone module:
+**Return value**  _(`object`)_: an object representation of the full Bitcoin block graph
 
-```JavaScript
-const IpldBitcoin = require('ipld-bitcoin')
+<a name="serializeFullBitcoinBinary"></a>
+### `serializeFullBitcoinBinary(a)`
 
-// `bitcoinBlock` is some binary Bitcoin block
-const dagNode = IpldBitcoin.util.deserialize(bitcoinBlock)
-console.log(dagNode)
-```
+Encode a full object form of a Bitcoin block graph into its binary equivalent. This is the inverse of [`deserializeFullBitcoinBinary`](#deserializeFullBitcoinBinary) and should produce the exact binary representation of a Bitcoin block graph given the complete input.
 
-## Contribute
+The object form must include both the header and full transaction (including witness data) data for it to be properly serialized.
 
-Feel free to join in. All welcome. Open an [issue](https://github.com/ipld/js-ipld-bitcoin/issues)!
+As of writing, the witness merkle nonce is not currently present in the JSON output from Bitcoin Core's `bitcoin-cli`. See https://github.com/bitcoin/bitcoin/pull/18826 for more information. Without this nonce, the exact binary form cannot be fully generated.
 
-For more information please check out the [contributing guidelines](CONTRIBUTING.md).
+**Parameters:**
 
-Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+* **`a`** _(`object`)_: full JavaScript object form of a Bitcoin block graph
+
+**Return value**  _(`Buffer`)_: a binary form of the Bitcoin block graph
+
+<a name="blockToCar"></a>
+### `async blockToCar(a, an, a)`
+
+Extract all IPLD blocks from a full Bitcoin block graph and write them to a CAR archive.
+
+This operation requires a full deserialized Bitcoin block graph, where the transactions in their full form (with witness data intact post-segwit), as typically presented in JSON form with the Bitcoin Core `bitcoin-cli` command `getblock <identifier> 2` or using one of the utilities here to instantiate a full object form.
+
+The CAR archive should be created using [datastore-car](https://github.com/ipld/js-datastore-car) and should be capable of write operations.
+
+**Parameters:**
+
+* **`a`** _(`object`)_: multiformats object with `dbl-sha2-256` multihash, `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` multicodecs as well as the `dag-cbor` multicodec which is required for writing the CAR header.
+* **`an`** _(`object`)_: initialized and writable `CarDatastore` instance.
+* **`a`** _(`object`)_: full Bitcoin block graph.
+
+**Return value**  _(`object`)_: a CID for the root block (the header `bitcoin-block`).
+
+<a name="cidToHash"></a>
+### `cidToHash(a, a)`
+
+Convert a CID to a Bitcoin block or transaction identifier. This process is the reverse of [`blockHashToCID`](#blockHashToCID) and [`txHashToCID`](#txHashToCID) and involves extracting and decoding the multihash from the CID, reversing the bytes and presenting it as a big-endian hexadecimal string.
+
+Works for both block identifiers and transaction identifiers.
+
+**Parameters:**
+
+* **`a`** _(`object`)_: multiformats object
+* **`a`** _(`object`)_: CID (`multiformats.CID`)
+
+**Return value**  _(`string`)_: a hexadecimal big-endian representation of the identifier.
+
+<a name="assemble"></a>
+### `async assemble(a, an, a)`
+
+Given a CID for a `bitcoin-block` Bitcoin block header and an IPLD block loader that can retrieve Bitcoin IPLD blocks by CID, re-assemble a full Bitcoin block graph into both object and binary forms.
+
+The loader should be able to return the binary form for `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` CIDs.
+
+Note that there are approximately 4,000 Bitcoin block graphs pre-SegWit which have the appearance of SegWit blocks but are, in fact, not. These blocks will cause the loader to be called for `bitcoin-witness-commitment` CIDs that will not resolve. Such resolution should throw an `Error` but this will not be propagated, but rather be used as a signal that the block is not a SegWit block and the assembler should not proceed to load it as such.
+
+**Parameters:**
+
+* **`a`** _(`object`)_: multiformats object with the Bitcoin multicodec and multihash installed
+* **`an`** _(`function`)_: IPLD block loader function that takes a CID argument and returns a `Buffer` or `Uint8Array` containing the binary block data for that CID
+* **`a`** _(`CID`)_: CID of type `bitcoin-block` pointing to the Bitcoin block header for the block to be assembled
+
+**Return value**  _(`object`)_: an object containing two properties, `deserialized` and `binary` where `deserialized` contains a full JavaScript instantiation of the Bitcoin block graph and `binary` contains a `Buffer` with the binary representation of the graph.
+
+<a name="blockHashToCID"></a>
+### `blockHashToCID(multiformats)`
+
+Convert a Bitcoin block identifier (hash) to a CID. The identifier should be in big-endian form, i.e. with leading zeros.
+
+The process of converting to a CID involves reversing the hash (to little-endian form), encoding as a `dbl-sha2-256` multihash and encoding as a `bitcoin-block` multicodec. This process is reversable, see [`cidToHash`](#cidToHash).
+
+**Parameters:**
+
+* **`multiformats`** _(`object`)_: a multiformats object with `dbl-sha2-256` multihash and `bitcoin-block` multicodec registered
+
+**Return value**  _(`object`)_: A CID (`multiformats.CID`) object representing this block identifier.
+
+<a name="txHashToCID"></a>
+### `txHashToCID(multiformats)`
+
+Convert a Bitcoin transaction identifier (hash) to a CID. The identifier should be in big-endian form as typically understood by Bitcoin applications.
+
+The process of converting to a CID involves reversing the hash (to little-endian form), encoding as a `dbl-sha2-256` multihash and encoding as a `bitcoin-tx` multicodec. This process is reversable, see [`cidToHash`](#cidToHash).
+
+**Parameters:**
+
+* **`multiformats`** _(`object`)_: a multiformats object with `dbl-sha2-256` multihash and `bitcoin-tx` multicodec registered
+
+**Return value**  _(`object`)_: A CID (`multiformats.CID`) object representing this transaction identifier.
 
 ## License
 
-[MIT](LICENSE) © 2018 IPFS
+Licensed under either of
+
+ * Apache 2.0, ([LICENSE-APACHE](LICENSE-APACHE) / http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT ([LICENSE-MIT](LICENSE-MIT) / http://opensource.org/licenses/MIT)
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

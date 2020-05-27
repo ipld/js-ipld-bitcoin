@@ -132,6 +132,14 @@ function decodeInit (multiformats) {
   }
 }
 
+/**
+ * Convert a Bitcoin transaction identifier (hash) to a CID. The identifier should be in big-endian form as typically understood by Bitcoin applications.
+ *
+ * The process of converting to a CID involves reversing the hash (to little-endian form), encoding as a `dbl-sha2-256` multihash and encoding as a `bitcoin-tx` multicodec. This process is reversable, see {@link cidToHash}.
+ *
+ * @param {object} multiformats a multiformats object with `dbl-sha2-256` multihash and `bitcoin-tx` multicodec registered
+ * @returns {object} A CID (`multiformats.CID`) object representing this transaction identifier.
+ */
 function txHashToCID (multiformats, blockHash) {
   if (typeof blockHash !== 'string') {
     blockHash = toHex(blockHash)
