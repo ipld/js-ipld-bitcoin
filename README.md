@@ -1,6 +1,6 @@
 # IPLD for Bitcoin
 
-**JavaScript Bitcoin data codec for IPLD**
+**JavaScript Bitcoin data multiformats codecs and utilities for IPLD**
 
 ![CI](https://github.com/rvagg/js-bitcoin/workflows/CI/badge.svg)
 
