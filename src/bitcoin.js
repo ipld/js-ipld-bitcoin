@@ -10,7 +10,7 @@ const { encodeAll, assemble } = require('./complete')
  *
  * The object returned, if passed through `JSON.stringify()` should be identical to the JSON form provided by the Bitcoin Core `bitcoin-cli` `getblock <identifier> 2` command (minus some chain-context elements that are not possible to derive without the full blockchain).
  *
- * @param {Uint8Array|Buffer} a binary form of a Bitcoin block graph
+ * @param {Uint8Array|Buffer} binary a binary form of a Bitcoin block graph
  * @returns {object} an object representation of the full Bitcoin block graph
  * @function
  */
@@ -25,7 +25,7 @@ function deserializeFullBitcoinBinary (binary) {
  *
  * As of writing, the witness merkle nonce is not currently present in the JSON output from Bitcoin Core's `bitcoin-cli`. See https://github.com/bitcoin/bitcoin/pull/18826 for more information. Without this nonce, the exact binary form cannot be fully generated.
  *
- * @param {object} a full JavaScript object form of a Bitcoin block graph
+ * @param {object} obj a full JavaScript object form of a Bitcoin block graph
  * @returns {Buffer} a binary form of the Bitcoin block graph
  * @function
  */
@@ -40,9 +40,9 @@ function serializeFullBitcoinBinary (obj) {
  *
  * The CAR archive should be created using [datastore-car](https://github.com/ipld/js-datastore-car) and should be capable of write operations.
  *
- * @param {object} a multiformats object with `dbl-sha2-256` multihash, `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` multicodecs as well as the `dag-cbor` multicodec which is required for writing the CAR header.
- * @param {object} an initialized and writable `CarDatastore` instance.
- * @param {object} a full Bitcoin block graph.
+ * @param {object} multiformats a multiformats object with `dbl-sha2-256` multihash, `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` multicodecs as well as the `dag-cbor` multicodec which is required for writing the CAR header.
+ * @param {object} carWriter an initialized and writable `CarDatastore` instance.
+ * @param {object} obj a full Bitcoin block graph.
  * @returns {object} a CID for the root block (the header `bitcoin-block`).
  * @function
  */
@@ -65,8 +65,8 @@ async function blockToCar (multiformats, carWriter, obj) {
  *
  * Works for both block identifiers and transaction identifiers.
  *
- * @param {object} a multiformats object
- * @param {object} a CID (`multiformats.CID`)
+ * @param {object} multiformats a multiformats object
+ * @param {object} cid a CID (`multiformats.CID`)
  * @returns {string} a hexadecimal big-endian representation of the identifier.
  * @function
  */

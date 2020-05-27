@@ -96,9 +96,9 @@ async function * encodeAll (multiformats, block) {
  *
  * Note that there are approximately 4,000 Bitcoin block graphs pre-SegWit which have the appearance of SegWit blocks but are, in fact, not. These blocks will cause the loader to be called for `bitcoin-witness-commitment` CIDs that will not resolve. Such resolution should throw an `Error` but this will not be propagated, but rather be used as a signal that the block is not a SegWit block and the assembler should not proceed to load it as such.
  *
- * @param {object} a multiformats object with the Bitcoin multicodec and multihash installed
- * @param {function} an IPLD block loader function that takes a CID argument and returns a `Buffer` or `Uint8Array` containing the binary block data for that CID
- * @param {CID} a CID of type `bitcoin-block` pointing to the Bitcoin block header for the block to be assembled
+ * @param {object} multiformats a multiformats object with the Bitcoin multicodec and multihash installed
+ * @param {function} loader an IPLD block loader function that takes a CID argument and returns a `Buffer` or `Uint8Array` containing the binary block data for that CID
+ * @param {CID} blockCID a CID of type `bitcoin-block` pointing to the Bitcoin block header for the block to be assembled
  * @returns {object} an object containing two properties, `deserialized` and `binary` where `deserialized` contains a full JavaScript instantiation of the Bitcoin block graph and `binary` contains a `Buffer` with the binary representation of the graph.
  * @function
  */

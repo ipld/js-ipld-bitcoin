@@ -64,16 +64,16 @@ console.log(Buffer.from(tx.vin[0].coinbase, 'hex').toString('utf8'))
 
 ### Contents
 
- * [`deserializeFullBitcoinBinary(a)`](#deserializeFullBitcoinBinary)
- * [`serializeFullBitcoinBinary(a)`](#serializeFullBitcoinBinary)
- * [`async blockToCar(a, an, a)`](#blockToCar)
- * [`cidToHash(a, a)`](#cidToHash)
- * [`async assemble(a, an, a)`](#assemble)
+ * [`deserializeFullBitcoinBinary(binary)`](#deserializeFullBitcoinBinary)
+ * [`serializeFullBitcoinBinary(obj)`](#serializeFullBitcoinBinary)
+ * [`async blockToCar(multiformats, carWriter, obj)`](#blockToCar)
+ * [`cidToHash(multiformats, cid)`](#cidToHash)
+ * [`async assemble(multiformats, loader, blockCID)`](#assemble)
  * [`blockHashToCID(multiformats)`](#blockHashToCID)
  * [`txHashToCID(multiformats)`](#txHashToCID)
 
 <a name="deserializeFullBitcoinBinary"></a>
-### `deserializeFullBitcoinBinary(a)`
+### `deserializeFullBitcoinBinary(binary)`
 
 Instantiate a full object form from a full Bitcoin block graph binary representation. This binary form is typically extracted from a Bitcoin network node, such as with the Bitcoin Core `bitcoin-cli` `getblock <identifier> 0` command (which outputs hexadecimal form and therefore needs to be decoded prior to handing to this function). This full binary form can also be obtained from the utility [`assemble`](#assemble) function which can construct the full graph form of a Bitcoin block from the full IPLD block graph.
 
@@ -81,12 +81,12 @@ The object returned, if passed through `JSON.stringify()` should be identical to
 
 **Parameters:**
 
-* **`a`** _(`Uint8Array|Buffer`)_: binary form of a Bitcoin block graph
+* **`binary`** _(`Uint8Array|Buffer`)_: a binary form of a Bitcoin block graph
 
 **Return value**  _(`object`)_: an object representation of the full Bitcoin block graph
 
 <a name="serializeFullBitcoinBinary"></a>
-### `serializeFullBitcoinBinary(a)`
+### `serializeFullBitcoinBinary(obj)`
 
 Encode a full object form of a Bitcoin block graph into its binary equivalent. This is the inverse of [`deserializeFullBitcoinBinary`](#deserializeFullBitcoinBinary) and should produce the exact binary representation of a Bitcoin block graph given the complete input.
 
@@ -96,12 +96,12 @@ As of writing, the witness merkle nonce is not currently present in the JSON out
 
 **Parameters:**
 
-* **`a`** _(`object`)_: full JavaScript object form of a Bitcoin block graph
+* **`obj`** _(`object`)_: a full JavaScript object form of a Bitcoin block graph
 
 **Return value**  _(`Buffer`)_: a binary form of the Bitcoin block graph
 
 <a name="blockToCar"></a>
-### `async blockToCar(a, an, a)`
+### `async blockToCar(multiformats, carWriter, obj)`
 
 Extract all IPLD blocks from a full Bitcoin block graph and write them to a CAR archive.
 
@@ -111,14 +111,14 @@ The CAR archive should be created using [datastore-car](https://github.com/ipld/
 
 **Parameters:**
 
-* **`a`** _(`object`)_: multiformats object with `dbl-sha2-256` multihash, `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` multicodecs as well as the `dag-cbor` multicodec which is required for writing the CAR header.
-* **`an`** _(`object`)_: initialized and writable `CarDatastore` instance.
-* **`a`** _(`object`)_: full Bitcoin block graph.
+* **`multiformats`** _(`object`)_: a multiformats object with `dbl-sha2-256` multihash, `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` multicodecs as well as the `dag-cbor` multicodec which is required for writing the CAR header.
+* **`carWriter`** _(`object`)_: an initialized and writable `CarDatastore` instance.
+* **`obj`** _(`object`)_: a full Bitcoin block graph.
 
 **Return value**  _(`object`)_: a CID for the root block (the header `bitcoin-block`).
 
 <a name="cidToHash"></a>
-### `cidToHash(a, a)`
+### `cidToHash(multiformats, cid)`
 
 Convert a CID to a Bitcoin block or transaction identifier. This process is the reverse of [`blockHashToCID`](#blockHashToCID) and [`txHashToCID`](#txHashToCID) and involves extracting and decoding the multihash from the CID, reversing the bytes and presenting it as a big-endian hexadecimal string.
 
@@ -126,13 +126,13 @@ Works for both block identifiers and transaction identifiers.
 
 **Parameters:**
 
-* **`a`** _(`object`)_: multiformats object
-* **`a`** _(`object`)_: CID (`multiformats.CID`)
+* **`multiformats`** _(`object`)_: a multiformats object
+* **`cid`** _(`object`)_: a CID (`multiformats.CID`)
 
 **Return value**  _(`string`)_: a hexadecimal big-endian representation of the identifier.
 
 <a name="assemble"></a>
-### `async assemble(a, an, a)`
+### `async assemble(multiformats, loader, blockCID)`
 
 Given a CID for a `bitcoin-block` Bitcoin block header and an IPLD block loader that can retrieve Bitcoin IPLD blocks by CID, re-assemble a full Bitcoin block graph into both object and binary forms.
 
@@ -142,9 +142,9 @@ Note that there are approximately 4,000 Bitcoin block graphs pre-SegWit which ha
 
 **Parameters:**
 
-* **`a`** _(`object`)_: multiformats object with the Bitcoin multicodec and multihash installed
-* **`an`** _(`function`)_: IPLD block loader function that takes a CID argument and returns a `Buffer` or `Uint8Array` containing the binary block data for that CID
-* **`a`** _(`CID`)_: CID of type `bitcoin-block` pointing to the Bitcoin block header for the block to be assembled
+* **`multiformats`** _(`object`)_: a multiformats object with the Bitcoin multicodec and multihash installed
+* **`loader`** _(`function`)_: an IPLD block loader function that takes a CID argument and returns a `Buffer` or `Uint8Array` containing the binary block data for that CID
+* **`blockCID`** _(`CID`)_: a CID of type `bitcoin-block` pointing to the Bitcoin block header for the block to be assembled
 
 **Return value**  _(`object`)_: an object containing two properties, `deserialized` and `binary` where `deserialized` contains a full JavaScript instantiation of the Bitcoin block graph and `binary` contains a `Buffer` with the binary representation of the graph.
 
@@ -159,7 +159,7 @@ The process of converting to a CID involves reversing the hash (to little-endian
 
 * **`multiformats`** _(`object`)_: a multiformats object with `dbl-sha2-256` multihash and `bitcoin-block` multicodec registered
 
-**Return value**  _(`object`)_: A CID (`multiformats.CID`) object representing this block identifier.
+**Return value**  _(`object`)_: a CID (`multiformats.CID`) object representing this block identifier.
 
 <a name="txHashToCID"></a>
 ### `txHashToCID(multiformats)`

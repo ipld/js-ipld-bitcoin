@@ -53,7 +53,7 @@ function init (multiformats) {
  * The process of converting to a CID involves reversing the hash (to little-endian form), encoding as a `dbl-sha2-256` multihash and encoding as a `bitcoin-block` multicodec. This process is reversable, see {@link cidToHash}.
  *
  * @param {object} multiformats a multiformats object with `dbl-sha2-256` multihash and `bitcoin-block` multicodec registered
- * @returns {object} A CID (`multiformats.CID`) object representing this block identifier.
+ * @returns {object} a CID (`multiformats.CID`) object representing this block identifier.
  */
 function blockHashToCID (multiformats, blockHash) {
   if (typeof blockHash !== 'string') {
