@@ -27,7 +27,9 @@ The following multihash is registered:
 
 * `dbl-sha2-256` / `0x56`: A double SHA2-256 hash: `SHA2-256(SHA2-256(bytes))`, used natively across all Bitcoin blocks, forming block identifiers, transaction identifiers and hashes and binary merkle tree nodes.
 
-Utilities are also provided to convert between Bitcoin hash identifiers and CIDs and to convert to and from full Bitcoin raw block data to a full collection of IPLD blocks. Additional conversion functionality for bitcoin raw data and the `bitcoin-cli` JSON format is provided by the **[bitcoin-block](https://github.com/rvagg/js-bitcoin-block)** library.
+In addition to the multiformats codecs and hash, utilities are also provided to convert between Bitcoin hash identifiers and CIDs and to convert to and from full Bitcoin raw block data to a full collection of IPLD blocks. Additional conversion functionality for bitcoin raw data and the `bitcoin-cli` JSON format is provided by the **[bitcoin-block](https://github.com/rvagg/js-bitcoin-block)** library.
+
+See the **API** section below for details on the additional utility functions.
 
 The previous incarnation of the Bitcoin codec for IPLD can be found at <https://github.com/ipld/js-ipld-bitcoin>.
 
