@@ -6,5 +6,6 @@ module.exports = {
   CODEC_TX: 'bitcoin-tx',
   CODEC_TX_CODE: 0xb1,
   CODEC_WITNESS_COMMITMENT: 'bitcoin-witness-commitment',
-  CODEC_WITNESS_COMMITMENT_CODE: 0xb2
+  CODEC_WITNESS_COMMITMENT_CODE: 0xb2,
+  SEGWIT_BLOCKTIME: 1503539857
 }

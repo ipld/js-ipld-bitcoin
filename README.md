@@ -138,8 +138,6 @@ Given a CID for a `bitcoin-block` Bitcoin block header and an IPLD block loader 
 
 The loader should be able to return the binary form for `bitcoin-block`, `bitcoin-tx` and `bitcoin-witness-commitment` CIDs.
 
-Note that there are approximately 4,000 Bitcoin block graphs pre-SegWit which have the appearance of SegWit blocks but are, in fact, not. These blocks will cause the loader to be called for `bitcoin-witness-commitment` CIDs that will not resolve. Such resolution should throw an `Error` but this will not be propagated, but rather be used as a signal that the block is not a SegWit block and the assembler should not proceed to load it as such.
-
 **Parameters:**
 
 * **`multiformats`** _(`object`)_: a multiformats object with the Bitcoin multicodec and multihash installed

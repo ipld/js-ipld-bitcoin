@@ -153,11 +153,7 @@ describe('formats', () => {
           // something less because we don't need to read the non-segwit transactions and maybe parts of the tx merkle
           assert(reads < blockCount)
         }
-        if (name === '450002') {
-          assert.strictEqual(failedReads, 1) // checking whether the witness commitment is real (it's not for 450002)
-        } else {
-          assert.strictEqual(failedReads, 0)
-        }
+        assert.strictEqual(failedReads, 0)
 
         assert.strictEqual(binary.toString('hex'), raw.toString('hex'), 're-encoded full binary form matches')
 
