@@ -1,6 +1,6 @@
 {
   "name": "ipld-bitcoin",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "JavaScript implementation of Bitcoin IPLD formats",
   "leadMaintainer": "Volker Mische <volker.mische@gmail.com>",
   "main": "src/index.js",
@@ -46,13 +46,11 @@
     "dirty-chai": "^2.0.1"
   },
   "contributors": [
-    "Alex Potsides <alex@achingbrain.net>",
-    "David Dias <daviddias.p@gmail.com>",
-    "Mathis Wiehl <mathis.wiehl@sinnerschrader.com>",
-    "Richard Schneider <makaretu@gmail.com>",
-    "Scott <scottystreet@gmail.com>",
     "Volker Mische <volker.mische@gmail.com>",
-    "greenkeeper[bot] <23040076+greenkeeper[bot]@users.noreply.github.com>",
-    "greenkeeper[bot] <greenkeeper[bot]@users.noreply.github.com>"
+    "Richard Schneider <makaretu@gmail.com>",
+    "David Dias <daviddias.p@gmail.com>",
+    "Alex Potsides <alex@achingbrain.net>",
+    "Mathis Wiehl <mathis.wiehl@sinnerschrader.com>",
+    "Scott <scottystreet@gmail.com>"
   ]
 }
