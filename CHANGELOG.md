@@ -1,3 +1,13 @@
+<a name="0.3.2"></a>
+## [0.3.2](https://github.com/ipld/js-ipld-bitcoin/compare/v0.3.1...v0.3.2) (2020-07-23)
+
+
+### Bug Fixes
+
+* **package:** update cids to version 0.8.0 ([bf67862](https://github.com/ipld/js-ipld-bitcoin/commit/bf67862))
+
+
+
 <a name="0.3.1"></a>
 ## [0.3.1](https://github.com/ipld/js-ipld-bitcoin/compare/v0.3.0...v0.3.1) (2020-01-13)
 
