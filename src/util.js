@@ -33,7 +33,11 @@ const deserialize = (binaryBlob) => {
       `Bitcoin block header needs to be ${BITCOIN_BLOCK_HEADER_SIZE} bytes`)
   }
 
-  const deserialized = BitcoinjsBlock.fromBuffer(Buffer.from(binaryBlob))
+  if (!Buffer.isBuffer(binaryBlob)) {
+    binaryBlob = Buffer.from(binaryBlob)
+  }
+
+  const deserialized = BitcoinjsBlock.fromBuffer(binaryBlob)
 
   const getters = {
     difficulty: function () {

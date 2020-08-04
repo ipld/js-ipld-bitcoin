@@ -26,6 +26,18 @@ describe('IPLD format util API deserialize()', () => {
     })
   })
 
+  it('should work correctly with Uint8Arrays', () => {
+    const dagNode = IpldBitcoin.util.deserialize(Uint8Array.from(fixtureBlockHeader))
+    verifyBlock(dagNode, {
+      version: 2,
+      prevHash: '87d6242b27d248a9e145fe764a0bcef03a403883a2e4c8590200000000000000',
+      merkleRoot: '11a5b9a70acebedbbf71ef8ca341e8a98cf279c49eee8f92e10a2227743b6aeb',
+      timestamp: 1386981279,
+      bits: 419740270,
+      nonce: 3159344128
+    })
+  })
+
   it('should deserialize Segwit correctly (a)', () => {
     const segwitBlockHex = loadFixture('test/fixtures/segwit.hex')
     const segwitBlockHeader = helpers.headerFromHexBlock(segwitBlockHex)
