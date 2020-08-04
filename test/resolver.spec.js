@@ -2,18 +2,15 @@
 'use strict'
 
 const loadFixture = require('aegir/fixtures')
-const chai = require('chai')
-const dirtyChai = require('dirty-chai')
-const expect = chai.expect
-chai.use(dirtyChai)
+const { expect } = require('aegir/utils/chai')
 const CID = require('cids')
-const { Buffer } = require('buffer')
+const uint8ArrayFromString = require('uint8arrays/from-string')
 const IpldBitcoin = require('../src/index')
 const helpers = require('./helpers')
 
 const fixtureBlockHex = loadFixture('test/fixtures/block.hex')
 const fixtureBlockHeader = helpers.headerFromHexBlock(fixtureBlockHex)
-const invalidBlock = Buffer.from('abcdef', 'hex')
+const invalidBlock = uint8ArrayFromString('abcdef', 'base16')
 
 describe('IPLD format resolve API resolve()', () => {
   it('should return the deserialized node if path is empty', () => {

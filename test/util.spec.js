@@ -2,13 +2,10 @@
 'use strict'
 
 const loadFixture = require('aegir/fixtures')
-const chai = require('chai')
-const dirtyChai = require('dirty-chai')
-const expect = chai.expect
-chai.use(dirtyChai)
+const { expect } = require('aegir/utils/chai')
 const CID = require('cids')
 const multicodec = require('multicodec')
-const { Buffer } = require('buffer')
+const uint8ArrayFromString = require('uint8arrays/from-string')
 const IpldBitcoin = require('../src/index')
 const helpers = require('./helpers')
 
@@ -19,6 +16,18 @@ const invalidDagNode = { invalid: 'dagNode' }
 describe('IPLD format util API deserialize()', () => {
   it('should work correctly', () => {
     const dagNode = IpldBitcoin.util.deserialize(fixtureBlockHeader)
+    verifyBlock(dagNode, {
+      version: 2,
+      prevHash: '87d6242b27d248a9e145fe764a0bcef03a403883a2e4c8590200000000000000',
+      merkleRoot: '11a5b9a70acebedbbf71ef8ca341e8a98cf279c49eee8f92e10a2227743b6aeb',
+      timestamp: 1386981279,
+      bits: 419740270,
+      nonce: 3159344128
+    })
+  })
+
+  it('should work correctly with Uint8Arrays', () => {
+    const dagNode = IpldBitcoin.util.deserialize(Uint8Array.from(fixtureBlockHeader))
     verifyBlock(dagNode, {
       version: 2,
       prevHash: '87d6242b27d248a9e145fe764a0bcef03a403883a2e4c8590200000000000000',
@@ -72,7 +81,7 @@ describe('IPLD format util API deserialize()', () => {
   })
 
   it('should error on an invalid block', () => {
-    const invalidBlock = Buffer.from('abcdef', 'hex')
+    const invalidBlock = uint8ArrayFromString('abcdef', 'base16')
     expect(() => {
       IpldBitcoin.util.deserialize(invalidBlock)
     }).to.throw('Bitcoin block header needs to be 80 bytes')
@@ -94,9 +103,9 @@ describe('IPLD format util API serialize()', () => {
 })
 
 describe('IPLD format util API cid()', () => {
-  const expectedCid = new CID(1, 'bitcoin-block', Buffer.from(
+  const expectedCid = new CID(1, 'bitcoin-block', uint8ArrayFromString(
     '56203ec2c691d447b2fd0d6a94742345af1f351037dab1ab9e900200000000000000',
-    'hex'))
+    'base16'))
 
   it('should encode the CID correctly', async () => {
     const cid = await IpldBitcoin.util.cid(fixtureBlockHeader)
@@ -107,9 +116,9 @@ describe('IPLD format util API cid()', () => {
     const cid = await IpldBitcoin.util.cid(fixtureBlockHeader, {
       hashAlg: multicodec.SHA3_256
     })
-    expect(cid.equals(new CID(1, 'bitcoin-block', Buffer.from(
+    expect(cid.equals(new CID(1, 'bitcoin-block', uint8ArrayFromString(
       '16208fd2802e0304c79c08a1ff2afb706ce64b78f3b94fd1c9142946c2e715589cfb',
-      'hex'
+      'base16'
     )))).to.be.true()
   })
 
