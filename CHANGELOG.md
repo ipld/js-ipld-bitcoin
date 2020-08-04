@@ -1,3 +1,19 @@
+<a name="0.4.0"></a>
+# [0.4.0](https://github.com/ipld/js-ipld-bitcoin/compare/v0.3.2...v0.4.0) (2020-08-04)
+
+
+### Bug Fixes
+
+* replace node buffers with uint8array ([#65](https://github.com/ipld/js-ipld-bitcoin/issues/65)) ([f9d3c7e](https://github.com/ipld/js-ipld-bitcoin/commit/f9d3c7e))
+
+
+### BREAKING CHANGES
+
+* - `util.serialize` returns `Uint8Array`s
+- `util.cid` returns `CID`s with a breaking API change - see https://github.com/multiformats/js-cid/pull/117 for changes
+
+
+
 <a name="0.3.2"></a>
 ## [0.3.2](https://github.com/ipld/js-ipld-bitcoin/compare/v0.3.1...v0.3.2) (2020-07-23)
 
