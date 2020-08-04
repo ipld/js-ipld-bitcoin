@@ -5,6 +5,7 @@ const CID = require('cids')
 const multicodec = require('multicodec')
 const multihashes = require('multihashes')
 const multihashing = require('multihashing-async')
+const { Buffer } = require('buffer')
 
 const BITCOIN_BLOCK_HEADER_SIZE = 80
 const CODEC = multicodec.BITCOIN_BLOCK
@@ -14,16 +15,16 @@ const DEFAULT_HASH_ALG = multicodec.DBL_SHA2_256
  * Serialize internal representation into a binary Bitcoin block.
  *
  * @param {BitcoinBlock} dagNode - Internal representation of a Bitcoin block
- * @returns {Buffer}
+ * @returns {Uint8Array}
  */
 const serialize = (dagNode) => {
-  return dagNode.toBuffer(true)
+  return new Uint8Array(dagNode.toBuffer(true))
 }
 
 /**
  * Deserialize Bitcoin block into the internal representation.
  *
- * @param {Buffer} binaryBlob - Binary representation of a Bitcoin block
+ * @param {Uint8Array} binaryBlob - Binary representation of a Bitcoin block
  * @returns {BitcoinBlock}
  */
 const deserialize = (binaryBlob) => {
@@ -32,7 +33,7 @@ const deserialize = (binaryBlob) => {
       `Bitcoin block header needs to be ${BITCOIN_BLOCK_HEADER_SIZE} bytes`)
   }
 
-  const deserialized = BitcoinjsBlock.fromBuffer(binaryBlob)
+  const deserialized = BitcoinjsBlock.fromBuffer(Buffer.from(binaryBlob))
 
   const getters = {
     difficulty: function () {
@@ -88,7 +89,7 @@ const cid = async (binaryBlob, userOptions) => {
   return cid
 }
 
-// Convert a Bitcoin hash (as Buffer) to a CID
+// Convert a Bitcoin hash (as Uint8Array) to a CID
 const hashToCid = (hash) => {
   const multihash = multihashes.encode(hash, DEFAULT_HASH_ALG)
   const cidVersion = 1
