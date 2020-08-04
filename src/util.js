@@ -34,7 +34,7 @@ const deserialize = (binaryBlob) => {
   }
 
   if (!Buffer.isBuffer(binaryBlob)) {
-    binaryBlob = Buffer.from(binaryBlob)
+    binaryBlob = Buffer.from(binaryBlob, binaryBlob.byteOffset, binaryBlob.byteLength)
   }
 
   const deserialized = BitcoinjsBlock.fromBuffer(binaryBlob)
