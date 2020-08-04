@@ -18,7 +18,7 @@ const DEFAULT_HASH_ALG = multicodec.DBL_SHA2_256
  * @returns {Uint8Array}
  */
 const serialize = (dagNode) => {
-  return new Uint8Array(dagNode.toBuffer(true))
+  return dagNode.toBuffer(true)
 }
 
 /**
