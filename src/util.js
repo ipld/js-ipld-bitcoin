@@ -3,8 +3,8 @@
 const BitcoinjsBlock = require('bitcoinjs-lib').Block
 const CID = require('cids')
 const multicodec = require('multicodec')
-const multihashes = require('multihashes')
 const multihashing = require('multihashing-async')
+const multihashes = multihashing.multihash
 const { Buffer } = require('buffer')
 
 const BITCOIN_BLOCK_HEADER_SIZE = 80
