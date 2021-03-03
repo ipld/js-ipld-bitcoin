@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 'use strict'
 
-const loadFixture = require('aegir/fixtures')
+const loadFixture = require('aegir/utils/fixtures')
 const { expect } = require('aegir/utils/chai')
 const CID = require('cids')
 const uint8ArrayFromString = require('uint8arrays/from-string')
