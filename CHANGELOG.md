@@ -1,3 +1,12 @@
+## [0.4.1](https://github.com/ipld/js-ipld-bitcoin/compare/v0.4.0...v0.4.1) (2021-03-03)
+
+
+### Bug Fixes
+
+* remove redundant multihashes dep ([#66](https://github.com/ipld/js-ipld-bitcoin/issues/66)) ([40a4221](https://github.com/ipld/js-ipld-bitcoin/commit/40a42214d4e52c241cb4ca283a12341a6e849c6e))
+
+
+
 <a name="0.4.0"></a>
 # [0.4.0](https://github.com/ipld/js-ipld-bitcoin/compare/v0.3.2...v0.4.0) (2020-08-04)
 
