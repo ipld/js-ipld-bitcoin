@@ -14,7 +14,7 @@ const DEFAULT_HASH_ALG = multicodec.DBL_SHA2_256
 /**
  * Serialize internal representation into a binary Bitcoin block.
  *
- * @param {BitcoinBlock} dagNode - Internal representation of a Bitcoin block
+ * @param {BitcoinjsBlock} dagNode - Internal representation of a Bitcoin block
  * @returns {Uint8Array}
  */
 const serialize = (dagNode) => {
@@ -25,7 +25,6 @@ const serialize = (dagNode) => {
  * Deserialize Bitcoin block into the internal representation.
  *
  * @param {Uint8Array} binaryBlob - Binary representation of a Bitcoin block
- * @returns {BitcoinBlock}
  */
 const deserialize = (binaryBlob) => {
   if (binaryBlob.length !== BITCOIN_BLOCK_HEADER_SIZE) {
@@ -79,15 +78,14 @@ const deserialize = (binaryBlob) => {
  * @param {Object} binaryBlob - Encoded IPLD Node
  * @param {Object} [userOptions] - Options to create the CID
  * @param {number} [userOptions.cidVersion=1] - CID version number
- * @param {string} [UserOptions.hashAlg] - Defaults to the defaultHashAlg of the format
- * @returns {Promise.<CID>}
+ * @param {string} [userOptions.hashAlg] - Defaults to the defaultHashAlg of the format
  */
 const cid = async (binaryBlob, userOptions) => {
   const defaultOptions = { cidVersion: 1, hashAlg: DEFAULT_HASH_ALG }
   const options = Object.assign(defaultOptions, userOptions)
 
   const multihash = await multihashing(binaryBlob, options.hashAlg)
-  const codecName = multicodec.print[CODEC]
+  const codecName = multicodec.getNameFromCode(CODEC)
   const cid = new CID(options.cidVersion, codecName, multihash)
 
   return cid
