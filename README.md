@@ -1,5 +1,7 @@
 # IPLD for Bitcoin
 
+**This project is no longer under active development and has been archived. See https://github.com/ipld/js-bitcoin for a newer and more complete implementation of a Bitcoin IPLD codec.**
+
 [![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
 [![](https://img.shields.io/badge/project-IPLD-blue.svg?style=flat-square)](http://github.com/ipld/ipld)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
